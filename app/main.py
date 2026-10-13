@@ -28,9 +28,16 @@ class Source(BaseModel):
     url: str
 
 
+class Confiance(BaseModel):
+    niveau: str = Field(description="elevee | a_verifier | faible | refus")
+    libelle: str
+    raisons: list[str]
+
+
 class Reponse(BaseModel):
     reponse: str
     sources: list[Source]
+    confiance: Confiance
     filtres: dict | None = Field(description="Clause `where` ChromaDB appliquée (débogage)")
     latence_ms: int
 
