@@ -1,0 +1,15 @@
+# --- API ---
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic>=2.7
+
+# --- Recherche vectorielle ---
+chromadb>=0.5
+sentence-transformers>=3.0   # installe aussi torch (version CPU sur Windows, ~200 Mo)
+
+# --- LLM (client compatible OpenAI : HF router aujourd'hui, vLLM/Ollama demain) ---
+openai>=1.40
+
+# --- Utilitaires ---
+python-dotenv>=1.0
+requests>=2.32

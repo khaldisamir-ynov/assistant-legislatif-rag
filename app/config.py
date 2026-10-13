@@ -1,0 +1,38 @@
+"""Configuration centralisée du projet.
+
+Toutes les valeurs variables (secrets, URL, noms de modèles) viennent de
+l'environnement. Les autres modules importent ce fichier au lieu de lire
+os.environ eux-mêmes : un seul endroit à modifier, aucun secret dans le code.
+"""
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# Racine du projet = dossier parent de app/
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Charge .env s'il existe. Une variable déjà définie dans le système
+# (ex. sur le serveur en production) reste prioritaire sur le fichier.
+load_dotenv(BASE_DIR / ".env")
+
+# --- Source de données (open data Assemblée nationale, 17e législature) ---
+AN_ZIP_URL = (
+    "https://data.assemblee-nationale.fr/static/openData/repository/17/loi/"
+    "dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
+)
+DATA_DIR = BASE_DIR / "data"
+
+# --- ChromaDB (base vectorielle persistée sur disque) ---
+CHROMA_DIR = BASE_DIR / "chroma_db"
+CHROMA_COLLECTION = "dossiers"
+
+# --- Embeddings ---
+# Défini UNE seule fois ici : ingest.py et l'API l'importent tous les deux,
+# ce qui garantit le même modèle à l'ingestion et à la requête.
+EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
+
+# --- LLM via une API compatible OpenAI ---
+LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.mistral.ai/v1")
+LLM_API_KEY = os.getenv("LLM_API_KEY")
+LLM_MODEL = os.getenv("LLM_MODEL", "ministral-14b-latest")
