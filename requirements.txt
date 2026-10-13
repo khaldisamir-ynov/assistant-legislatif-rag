@@ -7,9 +7,12 @@ pydantic>=2.7
 chromadb>=0.5
 sentence-transformers>=3.0   # installe aussi torch (version CPU sur Windows, ~200 Mo)
 
-# --- LLM (client compatible OpenAI : HF router aujourd'hui, vLLM/Ollama demain) ---
+# --- LLM (client compatible OpenAI : API Mistral aujourd'hui, vLLM/Ollama demain) ---
 openai>=1.40
 
 # --- Utilitaires ---
 python-dotenv>=1.0
 requests>=2.32
+
+# --- Interface de chat ---
+chainlit>=2.0

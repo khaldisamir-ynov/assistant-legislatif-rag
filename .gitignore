@@ -10,3 +10,7 @@ hugging-face-config/
 # Fichiers locaux : suivi personnel et sortie générée par evaluate.py
 AVANCEMENT.md
 evaluation_resultats.json
+
+# Chainlit : fichiers envoyés par les utilisateurs, traductions recréées au démarrage
+.files/
+.chainlit/translations/
