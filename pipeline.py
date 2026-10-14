@@ -12,17 +12,21 @@ import time
 from collections import Counter
 
 from app import config
-from app.sources import an_dossiers
-from app.stockage import chroma
+from app.sources import an_agenda, an_dossiers
+from app.stockage import chroma, sqlite
 from app.transform import jsonl
+from app.transform.agenda import points_de_reunion
 from app.transform.fiches_dossiers import construire_fiche
 
 FICHES_JSONL = config.PROCESSED_DIR / "dossiers.jsonl"
+AGENDA_JSONL = config.PROCESSED_DIR / "agenda.jsonl"
 
 
 def extraire(telecharger: bool) -> None:
     dossier = an_dossiers.telecharger_et_extraire(force=telecharger)
     print(f"[extraire]    {len(list(dossier.glob('*.json')))} dossiers bruts dans {dossier}")
+    an_agenda.telecharger(force=telecharger)
+    print(f"[extraire]    agenda : {an_agenda.ZIP_PATH}")
 
 
 def transformer() -> None:
@@ -31,10 +35,16 @@ def transformer() -> None:
     statuts = Counter(f["metadonnees"]["statut"] for f in fiches)
     print(f"[transformer] {len(fiches)} fiches -> {FICHES_JSONL}  {dict(statuts.most_common())}")
 
+    points = [p for r in an_agenda.iter_reunions() for p in points_de_reunion(r)]
+    jsonl.ecrire(AGENDA_JSONL, points)
+    print(f"[transformer] {len(points)} points d'agenda -> {AGENDA_JSONL}")
+
 
 def stocker() -> None:
     nb = chroma.indexer(config.CHROMA_COLLECTION, jsonl.lire(FICHES_JSONL))
     print(f"[stocker]     {nb} documents dans la collection '{config.CHROMA_COLLECTION}'")
+    nb = sqlite.ecrire_agenda(jsonl.lire(AGENDA_JSONL))
+    print(f"[stocker]     {nb} points d'agenda dans {config.SQLITE_PATH.name}")
 
 
 def main():
