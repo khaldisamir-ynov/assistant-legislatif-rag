@@ -31,7 +31,7 @@ CHROMA_DIR = BASE_DIR / "chroma_db"
 CHROMA_COLLECTION = "dossiers"
 
 # --- Embeddings ---
-# Défini UNE seule fois ici : ingest.py et l'API l'importent tous les deux,
+# Défini UNE seule fois ici : pipeline.py et l'API l'importent tous les deux,
 # ce qui garantit le même modèle à l'ingestion et à la requête.
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
 
