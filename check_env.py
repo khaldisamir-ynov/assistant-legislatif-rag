@@ -18,7 +18,7 @@ if ".venv" not in sys.executable:
 
 # 2. Bibliothèques installées (nom du paquet pip)
 for paquet in ["fastapi", "uvicorn", "pydantic", "chromadb",
-               "sentence-transformers", "torch", "openai", "python-dotenv", "requests"]:
+               "onnxruntime", "tokenizers", "openai", "python-dotenv", "requests"]:
     try:
         print(f"{paquet:<22}: {version(paquet)}")
     except PackageNotFoundError:

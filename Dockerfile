@@ -21,16 +21,16 @@ WORKDIR /app
 
 # 1. Dépendances AVANT le code : Docker met chaque étape en cache. Tant que
 #    requirements.txt ne change pas, modifier le code ne réinstalle rien.
-#    torch en version CPU : la version par défaut sous Linux embarque CUDA (~4 Go inutiles ici).
+#    Pas de torch : les embeddings passent par onnxruntime (voir app/embeddings.py).
 COPY requirements.txt .
-RUN pip install --index-url https://download.pytorch.org/whl/cpu torch \
- && pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
-# 2. Modèle d'embeddings téléchargé AU BUILD (~1 Go) : le conteneur démarre sans
-#    réseau vers Hugging Face, toujours avec la même version du modèle.
+# 2. Modèle d'embeddings (version ONNX, ~1,1 Go) téléchargé AU BUILD : le conteneur
+#    démarre sans réseau vers Hugging Face, toujours avec la même version du modèle.
+#    Seuls les 2 fichiers utiles sont récupérés, pas tout le dépôt du modèle.
 ARG EMBEDDING_MODEL=intfloat/multilingual-e5-base
 ENV EMBEDDING_MODEL=${EMBEDDING_MODEL}
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('${EMBEDDING_MODEL}')"
+RUN python -c "from huggingface_hub import hf_hub_download as h; [h('${EMBEDDING_MODEL}', f) for f in ('onnx/model.onnx', 'onnx/tokenizer.json')]"
 ENV HF_HUB_OFFLINE=1
 
 # 3. Le code, en dernier : c'est ce qui change le plus souvent

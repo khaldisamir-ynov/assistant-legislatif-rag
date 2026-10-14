@@ -5,7 +5,12 @@ pydantic>=2.7
 
 # --- Recherche vectorielle ---
 chromadb>=0.5
-sentence-transformers>=3.0   # installe aussi torch (version CPU sur Windows, ~200 Mo)
+
+# --- Embeddings : version ONNX du modèle e5, sans torch ni sentence-transformers (~1,2 Go de moins) ---
+onnxruntime>=1.17
+tokenizers>=0.15
+huggingface_hub>=0.20   # téléchargement du modèle (1re fois), puis lecture du cache
+numpy>=1.26
 
 # --- LLM (client compatible OpenAI : API Mistral aujourd'hui, vLLM/Ollama demain) ---
 openai>=1.40
