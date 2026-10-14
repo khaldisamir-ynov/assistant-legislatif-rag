@@ -1,7 +1,9 @@
-"""Accès aux données open data de l'Assemblée nationale (dossiers législatifs).
+"""Couche 1, EXTRAIRE : dossiers législatifs de l'Assemblée nationale (open data).
 
 Une seule responsabilité : télécharger le ZIP, l'extraire et lire l'arbre des
-actes. La transformation en "fiche texte" viendra à l'étape 2.
+actes. Aucune mise en forme ici : c'est le rôle de app/transform/.
+
+Test :  python -m app.sources.an_dossiers   -> télécharge et extrait le ZIP du jour
 """
 import json
 import zipfile
@@ -11,16 +13,17 @@ import requests
 
 from app import config
 
-ZIP_PATH = config.DATA_DIR / "Dossiers_Legislatifs.json.zip"
-RAW_DIR = config.DATA_DIR / "raw"
+SOURCE_DIR = config.RAW_DIR / "an_dossiers"   # une source = un sous-dossier de data/raw/
+ZIP_PATH = SOURCE_DIR / "Dossiers_Legislatifs.json.zip"
 # Vérifié : le ZIP contient json/dossierParlementaire/ (les dossiers)
 # et json/document/ (métadonnées des textes déposés, pas leur contenu).
-DOSSIERS_DIR = RAW_DIR / "json" / "dossierParlementaire"
+DOSSIERS_DIR = SOURCE_DIR / "json" / "dossierParlementaire"
+DOCUMENTS_DIR = SOURCE_DIR / "json" / "document"
 
 
 def telecharger_et_extraire(force: bool = False) -> Path:
     """Télécharge le ZIP (si absent ou force=True), l'extrait, renvoie le dossier des JSON."""
-    config.DATA_DIR.mkdir(exist_ok=True)
+    SOURCE_DIR.mkdir(parents=True, exist_ok=True)
     if force or not ZIP_PATH.exists():
         print(f"Téléchargement de {config.AN_ZIP_URL} ...")
         reponse = requests.get(config.AN_ZIP_URL, timeout=120)
@@ -29,7 +32,7 @@ def telecharger_et_extraire(force: bool = False) -> Path:
         force = True  # nouveau ZIP => on ré-extrait
     if force or not DOSSIERS_DIR.exists():
         with zipfile.ZipFile(ZIP_PATH) as z:
-            z.extractall(RAW_DIR)
+            z.extractall(SOURCE_DIR)
     return DOSSIERS_DIR
 
 
@@ -86,3 +89,8 @@ def actes_dates(dossier: dict) -> list[dict]:
     if racine:
         parcourir(racine["acteLegislatif"], None)
     return sorted(resultat, key=lambda a: a["date"])
+
+
+if __name__ == "__main__":
+    dossier = telecharger_et_extraire(force=True)
+    print(f"{len(list(dossier.glob('*.json')))} dossiers extraits dans {dossier}")

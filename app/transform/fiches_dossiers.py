@@ -1,15 +1,15 @@
-"""Transformation d'un dossier législatif (JSON) en "fiche texte" + métadonnées.
+"""Couche 2, TRANSFORMER : dossier législatif (JSON brut) -> "fiche texte" + métadonnées.
 
 Fonctions pures : pas de téléchargement, pas de base de données.
-- la fiche (texte) sera transformée en vecteur (étape 3) et lue par le LLM (étape 6) ;
-- les métadonnées serviront aux filtres ChromaDB (étapes 4 et 5).
+- la fiche (texte) est vectorisée (en-tête seulement) et lue par le LLM ;
+- les métadonnées servent aux filtres ChromaDB (dates, statut).
 
-Test :  python -m app.fiches                 -> statistiques sur tous les dossiers
-        python -m app.fiches DLR5L17N53187   -> fiche d'un dossier
+Test :  python -m app.transform.fiches_dossiers                 -> statistiques sur tous les dossiers
+        python -m app.transform.fiches_dossiers DLR5L17N53187   -> fiche d'un dossier
 """
 from datetime import date
 
-from app.an_data import actes_dates
+from app.sources.an_dossiers import actes_dates
 
 LIBELLES_STATUT = {
     "promulgue": "promulgué (loi publiée au Journal officiel)",
@@ -179,7 +179,7 @@ if __name__ == "__main__":
     import sys
     from collections import Counter
 
-    from app.an_data import DOSSIERS_DIR, iter_dossiers, lire_dossier
+    from app.sources.an_dossiers import DOSSIERS_DIR, iter_dossiers, lire_dossier
 
     if len(sys.argv) > 1:
         fiche = construire_fiche(lire_dossier(DOSSIERS_DIR / f"{sys.argv[1]}.json"))

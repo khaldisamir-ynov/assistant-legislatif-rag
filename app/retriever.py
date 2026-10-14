@@ -7,22 +7,17 @@ Trois stratégies selon la question (filtres extraits par app/filters.py) :
 
 Test :  python -m app.retriever "Quelles lois ont été promulguées récemment ?"
 """
-from functools import lru_cache
-
-import chromadb
-
 from app import config
 from app.embeddings import encoder_requete
 from app.filters import Filtres, extraire_filtres
+from app.stockage import chroma
 
 NB_RESULTATS = 5
 
 
-@lru_cache(maxsize=1)
 def collection():
-    """Ouvre la collection une seule fois (réutilisée entre les requêtes de l'API)."""
-    client = chromadb.PersistentClient(path=str(config.CHROMA_DIR))
-    return client.get_collection(config.CHROMA_COLLECTION)
+    """La collection des fiches de dossiers (ouverte une seule fois par app/stockage/chroma.py)."""
+    return chroma.collection(config.CHROMA_COLLECTION)
 
 
 def _semantique(texte: str, where: dict | None) -> list[dict]:

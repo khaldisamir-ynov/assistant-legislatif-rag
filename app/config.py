@@ -22,8 +22,11 @@ AN_ZIP_URL = (
     "dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
 )
 DATA_DIR = BASE_DIR / "data"
+# Architecture en 3 couches : chaque couche écrit dans son propre dossier
+RAW_DIR = DATA_DIR / "raw"              # 1. EXTRAIRE    : fichiers bruts, tels que téléchargés
+PROCESSED_DIR = DATA_DIR / "processed"  # 2. TRANSFORMER : JSONL nettoyés, prêts à indexer
 
-# --- ChromaDB (base vectorielle persistée sur disque) ---
+# --- ChromaDB (base vectorielle persistée sur disque) : 3. STOCKER ---
 CHROMA_DIR = BASE_DIR / "chroma_db"
 CHROMA_COLLECTION = "dossiers"
 
