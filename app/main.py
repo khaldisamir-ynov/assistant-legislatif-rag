@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Assistant législatif",
     description="Questions sur les dossiers législatifs de la 17e législature (open data AN).",
-    version="0.1.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 
