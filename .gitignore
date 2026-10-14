@@ -14,6 +14,3 @@ evaluation_resultats.json
 # Chainlit : fichiers envoyés par les utilisateurs, traductions recréées au démarrage
 .files/
 .chainlit/translations/
-
-# Base SQLite (reconstruite par pipeline.py)
-*.db

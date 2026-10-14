@@ -21,7 +21,6 @@ AN_ZIP_URL = (
     "https://data.assemblee-nationale.fr/static/openData/repository/17/loi/"
     "dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
 )
-AN_AGENDA_URL = "https://data.assemblee-nationale.fr/static/openData/repository/17/vp/reunions/Agenda.json.zip"
 DATA_DIR = BASE_DIR / "data"
 # Architecture en 3 couches : chaque couche écrit dans son propre dossier
 RAW_DIR = DATA_DIR / "raw"              # 1. EXTRAIRE    : fichiers bruts, tels que téléchargés
@@ -30,9 +29,6 @@ PROCESSED_DIR = DATA_DIR / "processed"  # 2. TRANSFORMER : JSONL nettoyés, prê
 # --- ChromaDB (base vectorielle persistée sur disque) : 3. STOCKER ---
 CHROMA_DIR = BASE_DIR / "chroma_db"
 CHROMA_COLLECTION = "dossiers"
-
-# --- SQLite (données structurées : agenda) : 3. STOCKER ---
-SQLITE_PATH = BASE_DIR / "assistant.db"
 
 # --- Embeddings ---
 # Défini UNE seule fois ici : ingest.py et l'API l'importent tous les deux,
