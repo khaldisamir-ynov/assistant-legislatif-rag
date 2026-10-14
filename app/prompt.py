@@ -21,13 +21,24 @@ def en_francais(aaaammjj: int) -> str:
     return f"{s[6:]}/{s[4:6]}/{s[:4]}"
 
 
+# Libellés lisibles : le LLM recopie ce qu'on lui donne. Constaté le 14/10/2026 : avec les noms
+# techniques ("date_derniere_etape", "retire"), la réponse affichait ce jargon à l'utilisateur.
+LIBELLES_CHAMP_DATE = {
+    "date_promulgation_int": "date de promulgation",
+    "date_depot_an_int": "date de dépôt à l'Assemblée nationale",
+    "date_derniere_etape_int": "date de la dernière étape",
+}
+LIBELLES_STATUT = {"promulgue": "promulgué", "adopte": "adopté", "rejete": "rejeté",
+                   "retire": "retiré", "en_cours": "en cours d'examen"}
+
+
 def decrire_recherche(filtres: Filtres) -> str:
     """Explique au modèle COMMENT les fiches ont été choisies (utile pour "récemment")."""
     parties = []
     if filtres.statuts:
-        parties.append("statut : " + ", ".join(filtres.statuts))
+        parties.append("statut : " + ", ".join(LIBELLES_STATUT[s] for s in filtres.statuts))
     if filtres.date_min:
-        parties.append(f"{filtres.champ_date.removesuffix('_int')} à partir du {en_francais(filtres.date_min)}")
+        parties.append(f"{LIBELLES_CHAMP_DATE[filtres.champ_date]} à partir du {en_francais(filtres.date_min)}")
     if filtres.theme:
         parties.append(f"thème : {filtres.theme}")
     if not parties:
