@@ -4,9 +4,12 @@ Lancer :  chainlit run chainlit_app.py -w --port 8001
 Ouvrir :  http://localhost:8001
 (port 8001 pour ne pas entrer en conflit avec l'API FastAPI, sur 8000)
 """
+import time
+
 import chainlit as cl
 
 from app.embeddings import charger_modele
+from app.journal import journaliser_avis, journaliser_question
 from app.llm_client import ErreurLLM
 from app.rag import repondre
 from app.retriever import collection
@@ -59,9 +62,25 @@ async def question(message: cl.Message):
     if not 3 <= len(texte) <= 500:  # mêmes limites que l'API (modèle Question)
         await cl.Message(content="Merci de poser une question de 3 à 500 caractères.").send()
         return
+    debut = time.perf_counter()
     try:
         resultat = await cl.make_async(repondre)(texte)
     except ErreurLLM as e:
+        journaliser_question("chainlit", texte, int((time.perf_counter() - debut) * 1000), erreur=str(e))
         await cl.Message(content=f"⚠️ Service momentanément indisponible : {e}").send()
         return
-    await cl.Message(content=mise_en_forme(resultat)).send()
+    identifiant = journaliser_question("chainlit", texte, int((time.perf_counter() - debut) * 1000), resultat)
+    # Boutons d'avis sous la réponse : l'id relie l'avis à la question dans le journal
+    boutons = [cl.Action(name="avis", label="👍 Utile", payload={"id": identifiant, "utile": True}),
+               cl.Action(name="avis", label="👎 Pas utile", payload={"id": identifiant, "utile": False})]
+    cl.user_session.set(f"avis_{identifiant}", boutons)
+    await cl.Message(content=mise_en_forme(resultat), actions=boutons).send()
+
+
+@cl.action_callback("avis")
+async def avis(action: cl.Action):
+    journaliser_avis(action.payload["id"], action.payload["utile"])
+    # Un seul avis par réponse : les deux boutons disparaissent
+    for bouton in cl.user_session.get(f"avis_{action.payload['id']}", [action]):
+        await bouton.remove()
+    await cl.Message(content="Merci pour votre avis !").send()

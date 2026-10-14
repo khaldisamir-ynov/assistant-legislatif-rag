@@ -1,4 +1,4 @@
-"""API FastAPI : un seul endpoint, POST /ask.
+"""API FastAPI : POST /ask (question) et POST /feedback (avis sur une réponse).
 
 Lancer :  uvicorn app.main:app --reload
 Swagger : http://127.0.0.1:8000/docs
@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from app.embeddings import charger_modele
+from app.journal import journaliser_avis, journaliser_question
 from app.llm_client import ErreurLLM
 from app.rag import repondre
 from app.retriever import collection
@@ -35,11 +36,18 @@ class Confiance(BaseModel):
 
 
 class Reponse(BaseModel):
+    id: str = Field(description="Identifiant de la réponse dans le journal, à renvoyer à /feedback")
     reponse: str
     sources: list[Source]
     confiance: Confiance
     filtres: dict | None = Field(description="Clause `where` ChromaDB appliquée (débogage)")
     latence_ms: int
+
+
+class Avis(BaseModel):
+    id: str = Field(min_length=32, max_length=32, description="`id` renvoyé par /ask")
+    utile: bool
+    commentaire: str = Field(default="", max_length=1000)
 
 
 # --- Démarrage : on charge le modèle et la base UNE fois, avant la 1re requête ---
@@ -66,9 +74,19 @@ def ask(entree: Question) -> Reponse:
     try:
         resultat = repondre(entree.question)
     except ErreurLLM as e:
+        latence_ms = int((time.perf_counter() - debut) * 1000)
+        journaliser_question("api", entree.question, latence_ms, erreur=str(e))
         # 503 = service dépendant indisponible : le client sait qu'il peut réessayer
         raise HTTPException(status_code=503, detail=str(e)) from e
-    return Reponse(**resultat, latence_ms=int((time.perf_counter() - debut) * 1000))
+    latence_ms = int((time.perf_counter() - debut) * 1000)
+    identifiant = journaliser_question("api", entree.question, latence_ms, resultat)
+    return Reponse(**resultat, id=identifiant, latence_ms=latence_ms)
+
+
+@app.post("/feedback", status_code=204)
+def feedback(avis: Avis) -> None:
+    """Avis de l'utilisateur sur une réponse (utile ou non), ajouté au journal."""
+    journaliser_avis(avis.id, avis.utile, avis.commentaire)
 
 
 @app.get("/health")
