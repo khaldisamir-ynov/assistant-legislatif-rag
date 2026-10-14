@@ -69,3 +69,10 @@ def ask(entree: Question) -> Reponse:
         # 503 = service dépendant indisponible : le client sait qu'il peut réessayer
         raise HTTPException(status_code=503, detail=str(e)) from e
     return Reponse(**resultat, latence_ms=int((time.perf_counter() - debut) * 1000))
+
+
+@app.get("/health")
+def health() -> dict:
+    """Sonde de santé (Docker HEALTHCHECK, cloud) : le service répond et la base est chargée.
+    N'appelle PAS le LLM : une panne Mistral ne doit pas faire redémarrer le conteneur."""
+    return {"statut": "ok", "dossiers": collection().count()}

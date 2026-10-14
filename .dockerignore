@@ -1,0 +1,28 @@
+# Ce qui n'entre JAMAIS dans l'image (comme .gitignore, mais pour "docker build")
+
+# Secrets : la clé est fournie au lancement (--env-file), jamais copiée dans l'image
+.env
+
+# Environnement et caches locaux : l'image installe ses propres dépendances
+.venv/
+__pycache__/
+*.pyc
+
+# Données : montées en volume, reconstruites par pipeline.py
+data/
+chroma_db/
+*.db
+.files/
+.chainlit/translations/
+
+# Inutile à l'exécution
+.git/
+.gitignore
+.dockerignore
+Dockerfile
+architecture-c4-model/
+docs/
+AVANCEMENT.md
+questions-test.md
+evaluation_resultats.json
+check_env.py
