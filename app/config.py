@@ -22,6 +22,9 @@ AN_ZIP_URL = (
     "dossiers_legislatifs/Dossiers_Legislatifs.json.zip"
 )
 AN_AGENDA_URL = "https://data.assemblee-nationale.fr/static/openData/repository/17/vp/reunions/Agenda.json.zip"
+# Texte intégral des documents (exposé des motifs, articles) : l'open data AN ne le fournit pas.
+# API publique sans clé du projet Tricoteuses (spécification : docs/tricoteuses-api-parlement.openapi.json)
+TRICOTEUSES_API_URL = "https://parlement.tricoteuses.fr"
 DATA_DIR = BASE_DIR / "data"
 # Architecture en 3 couches : chaque couche écrit dans son propre dossier
 RAW_DIR = DATA_DIR / "raw"              # 1. EXTRAIRE    : fichiers bruts, tels que téléchargés

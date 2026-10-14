@@ -12,14 +12,16 @@ import time
 from collections import Counter
 
 from app import config
-from app.sources import an_agenda, an_dossiers
+from app.sources import an_agenda, an_dossiers, an_textes
 from app.stockage import chroma, sqlite
 from app.transform import jsonl
 from app.transform.agenda import points_de_reunion
-from app.transform.fiches_dossiers import construire_fiche
+from app.transform.fiches_dossiers import construire_fiche, est_une_loi
+from app.transform.textes import decouper, documents_cibles
 
 FICHES_JSONL = config.PROCESSED_DIR / "dossiers.jsonl"
 AGENDA_JSONL = config.PROCESSED_DIR / "agenda.jsonl"
+TEXTES_JSONL = config.PROCESSED_DIR / "textes.jsonl"
 
 
 def extraire(telecharger: bool) -> None:
@@ -27,6 +29,15 @@ def extraire(telecharger: bool) -> None:
     print(f"[extraire]    {len(list(dossier.glob('*.json')))} dossiers bruts dans {dossier}")
     an_agenda.telecharger(force=telecharger)
     print(f"[extraire]    agenda : {an_agenda.ZIP_PATH}")
+    if telecharger:  # cache incrémental : seuls les nouveaux documents sont demandés à l'API
+        uids = [c["uid"] for c in textes_cibles()]
+        print(f"[extraire]    textes : {an_textes.telecharger(uids)}")
+
+
+def textes_cibles() -> list[dict]:
+    """Documents dont on veut le texte, les plus récents d'abord (utile si le pipeline est interrompu)."""
+    cibles = [c for d in an_dossiers.iter_dossiers() if est_une_loi(d) for c in documents_cibles(d)]
+    return sorted(cibles, key=lambda c: c["date"], reverse=True)
 
 
 def transformer() -> None:
@@ -38,6 +49,18 @@ def transformer() -> None:
     points = [p for r in an_agenda.iter_reunions() for p in points_de_reunion(r)]
     jsonl.ecrire(AGENDA_JSONL, points)
     print(f"[transformer] {len(points)} points d'agenda -> {AGENDA_JSONL}")
+
+    metas = {f["id"]: f["metadonnees"] for f in fiches}
+    chunks, avec_texte = [], set()
+    cibles = textes_cibles()
+    for cible in cibles:
+        document = an_textes.lire(cible["uid"])  # None si absent de l'API (pas encore récupéré)
+        if document and cible["dossier_uid"] in metas:
+            chunks += decouper(document, cible, metas[cible["dossier_uid"]])
+            avec_texte.add(cible["dossier_uid"])
+    jsonl.ecrire(TEXTES_JSONL, chunks)
+    print(f"[transformer] {len(chunks)} chunks de texte -> {TEXTES_JSONL} "
+          f"(texte disponible pour {len(avec_texte)}/{len(metas)} dossiers)")
 
 
 def stocker() -> None:
