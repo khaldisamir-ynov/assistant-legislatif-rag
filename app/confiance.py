@@ -4,7 +4,7 @@ Principe : tout fait vérifiable cité dans la réponse (lien, date, numéro de 
 doit figurer dans le prompt envoyé au LLM (fiches + date du jour + période).
 Un fait absent du prompt a forcément été inventé.
 
-Ce que ce contrôle NE détecte PAS (vérifié à l'étape 8) : une date bien présente
+Ce que ce contrôle NE détecte PAS (constaté à l'évaluation) : une date bien présente
 dans les fiches mais attribuée à la mauvaise étape (Conseil constitutionnel daté
 du 30/06, date d'un autre vote). Il mesure la fidélité aux fiches, pas leur justesse.
 

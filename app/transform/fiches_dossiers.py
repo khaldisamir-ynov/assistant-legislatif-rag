@@ -31,7 +31,7 @@ def est_une_loi(dossier: dict) -> bool:
 
 
 def institution(code_acte: str) -> str:
-    """Le préfixe du code d'acte indique où l'acte a lieu (vérifié à l'étape 1)."""
+    """Le préfixe du code d'acte indique où l'acte a lieu (vérifié sur les données)."""
     # Après une CMP, chaque chambre vote le texte commun : CMP-DEBATS-AN-..., CMP-DEBATS-SN-...
     if code_acte.startswith("CMP-DEBATS-AN"):
         return "Assemblée nationale (texte de la CMP)"
@@ -169,7 +169,7 @@ def construire_fiche(dossier: dict, aujourd_hui: str | None = None) -> dict | No
         "id": dossier["uid"],
         "texte": "\n".join(lignes),             # fiche complète : lue par le LLM
         # Texte court, VECTORISÉ : titre + type + statut. Les étapes clés, communes à
-        # toutes les fiches, diluaient le thème (constaté à l'étape 3 : "Sécu").
+        # toutes les fiches, diluaient le thème (constaté : « Sécu » ne retrouvait pas le PLFSS).
         "texte_recherche": "\n".join(lignes[:3]),
         "metadonnees": metadonnees,
     }

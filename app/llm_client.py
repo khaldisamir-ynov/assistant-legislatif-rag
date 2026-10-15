@@ -11,7 +11,7 @@ from app import config
 
 
 class ErreurLLM(Exception):
-    """Erreur lisible, remontée à l'API (étape 7) au lieu d'une trace Python."""
+    """Erreur lisible, remontée à l'API au lieu d'une trace Python."""
 
 
 # Codes HTTP fréquents -> explication en français

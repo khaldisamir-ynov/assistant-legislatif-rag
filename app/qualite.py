@@ -13,9 +13,9 @@ Deux familles de contrôles :
 - comparaison avec la RÉFÉRENCE = le dernier lot mis en production (volume, statuts,
   dossiers disparus, statuts qui reculent). La référence est mise à jour par stocker().
 
-Seuils fixés à partir des données mesurées le 14/10/2026 (voir AVANCEMENT.md).
+Seuils fixés à partir des données mesurées le 14/10/2026.
 
-Test :  python -m app.qualite   -> contrôle data/processed/dossiers.jsonl sans rien indexer
+Lancer seul :  python pipeline.py --etape controler   (contrôle sans rien indexer)
 """
 import json
 from collections import Counter
@@ -235,12 +235,3 @@ def valider(fiches: list[dict], nb_bruts: int | None = None) -> bool:
     print(f"  Rapport : {rapport}")
     return not bloquants
 
-
-if __name__ == "__main__":
-    import sys
-
-    from app.sources.an_dossiers import DOSSIERS_DIR
-    from app.transform import jsonl
-
-    fiches = jsonl.lire(config.PROCESSED_DIR / "dossiers.jsonl")
-    sys.exit(0 if valider(fiches, len(list(DOSSIERS_DIR.glob("*.json")))) else 1)

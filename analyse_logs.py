@@ -3,7 +3,7 @@
 Usage :  python analyse_logs.py            -> synthèse + réponses à relire en priorité
          python analyse_logs.py --jours 7  -> seulement les 7 derniers jours
 
-Complète evaluate.py : evaluate.py rejoue 15 questions connues, ce script regarde
+Complète evaluate.py : evaluate.py rejoue des questions connues, ce script regarde
 les VRAIES questions des utilisateurs et leurs avis.
 """
 import argparse

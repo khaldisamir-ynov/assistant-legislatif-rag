@@ -15,10 +15,8 @@ from app import config
 
 SOURCE_DIR = config.RAW_DIR / "an_dossiers"   # une source = un sous-dossier de data/raw/
 ZIP_PATH = SOURCE_DIR / "Dossiers_Legislatifs.json.zip"
-# Vérifié : le ZIP contient json/dossierParlementaire/ (les dossiers)
-# et json/document/ (métadonnées des textes déposés, pas leur contenu).
+# Le ZIP contient aussi json/document/ (métadonnées des textes déposés), non utilisé.
 DOSSIERS_DIR = SOURCE_DIR / "json" / "dossierParlementaire"
-DOCUMENTS_DIR = SOURCE_DIR / "json" / "document"
 
 
 def telecharger_et_extraire(force: bool = False) -> Path:

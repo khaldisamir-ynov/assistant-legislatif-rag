@@ -1,14 +1,24 @@
 """Orchestration RAG : question -> retriever -> prompt -> LLM -> réponse + sources.
 
-C'est cette fonction que l'API appellera (étape 7).
+Point d'entrée commun à l'API (app/main.py) et au chat (chainlit_app.py).
 
 Test :  python -m app.rag "Quelles lois ont été promulguées récemment ?"
         python -m app.rag "..." --prompt     -> affiche le prompt sans appeler le LLM
 """
+import time
+
 from app.confiance import est_un_refus, evaluer
-from app.llm_client import generer
+from app.embeddings import charger_modele
+from app.journal import journaliser_question
+from app.llm_client import ErreurLLM, generer
 from app.prompt import construire_messages
-from app.retriever import rechercher
+from app.retriever import collection, rechercher
+
+
+def prechauffer() -> None:
+    """Charge le modèle d'embeddings et ouvre la base avant la 1re question (~5 s)."""
+    charger_modele()
+    collection()
 
 
 def repondre(question: str) -> dict:
@@ -28,11 +38,21 @@ def repondre(question: str) -> dict:
     return {"reponse": texte, "sources": sources, "filtres": filtres.where(), "confiance": confiance}
 
 
+def repondre_et_journaliser(question: str, canal: str) -> dict:
+    """repondre() + journal des questions. Ajoute "id" (à renvoyer avec l'avis) et "latence_ms".
+    Une panne du LLM est journalisée, puis l'ErreurLLM est relancée pour l'appelant."""
+    debut = time.perf_counter()
+    try:
+        resultat = repondre(question)
+    except ErreurLLM as e:
+        journaliser_question(canal, question, int((time.perf_counter() - debut) * 1000), erreur=str(e))
+        raise
+    latence_ms = int((time.perf_counter() - debut) * 1000)
+    return {**resultat, "id": journaliser_question(canal, question, latence_ms, resultat), "latence_ms": latence_ms}
+
+
 if __name__ == "__main__":
     import sys
-    import time
-
-    from app.llm_client import ErreurLLM
 
     question = sys.argv[1]
     if "--prompt" in sys.argv:

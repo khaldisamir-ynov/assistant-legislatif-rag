@@ -1,6 +1,6 @@
 """Extraction de filtres depuis la question, par règles simples (regex).
 
-Le modèle d'embeddings ne comprend pas "récemment" (constaté à l'étape 4) :
+Le modèle d'embeddings ne comprend pas "récemment" (constaté en exploration) :
 on traduit donc les indices de temps et de statut en filtres ChromaDB.
 
 Test :  python -m app.filters "Quelles lois ont été promulguées récemment ?"

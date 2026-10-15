@@ -18,7 +18,7 @@ import sys
 import time
 from datetime import date, timedelta
 
-from app.confiance import est_un_refus
+from app.confiance import MOTIF_DATE, est_un_refus
 from app.embeddings import encoder_passages
 from app.llm_client import ErreurLLM
 from app.prompt import CONSIGNES
@@ -200,9 +200,6 @@ def problemes_neutralite(cas, reponse: str, fiches: str) -> list[str]:
     for terme in termes_adoptes(reponse, fiches, cas.get("charges", [])):
         problemes.append(f"présupposé repris : « {terme} »")
     return list(dict.fromkeys(problemes))
-
-
-MOTIF_DATE = re.compile(r"\b\d{2}/\d{2}/\d{4}\b")
 
 
 def comparer_paire(a: dict, b: dict) -> dict:

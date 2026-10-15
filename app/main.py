@@ -3,16 +3,14 @@
 Lancer :  uvicorn app.main:app --reload
 Swagger : http://127.0.0.1:8000/docs
 """
-import time
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from app.embeddings import charger_modele
-from app.journal import journaliser_avis, journaliser_question
+from app.journal import journaliser_avis
 from app.llm_client import ErreurLLM
-from app.rag import repondre
+from app.rag import prechauffer, repondre_et_journaliser
 from app.retriever import collection
 
 
@@ -53,7 +51,7 @@ class Avis(BaseModel):
 # --- Démarrage : on charge le modèle et la base UNE fois, avant la 1re requête ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    charger_modele()  # ~5 s : mieux au démarrage que pendant la 1re question
+    prechauffer()  # ~5 s : mieux au démarrage que pendant la 1re question
     print(f"Collection prête : {collection().count()} dossiers")
     yield
 
@@ -70,17 +68,11 @@ app = FastAPI(
 # FastAPI les exécute alors dans un thread séparé, sans figer le serveur.
 @app.post("/ask", response_model=Reponse)
 def ask(entree: Question) -> Reponse:
-    debut = time.perf_counter()
     try:
-        resultat = repondre(entree.question)
+        return Reponse(**repondre_et_journaliser(entree.question, "api"))
     except ErreurLLM as e:
-        latence_ms = int((time.perf_counter() - debut) * 1000)
-        journaliser_question("api", entree.question, latence_ms, erreur=str(e))
         # 503 = service dépendant indisponible : le client sait qu'il peut réessayer
         raise HTTPException(status_code=503, detail=str(e)) from e
-    latence_ms = int((time.perf_counter() - debut) * 1000)
-    identifiant = journaliser_question("api", entree.question, latence_ms, resultat)
-    return Reponse(**resultat, id=identifiant, latence_ms=latence_ms)
 
 
 @app.post("/feedback", status_code=204)

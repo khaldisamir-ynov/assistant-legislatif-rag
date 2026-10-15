@@ -4,9 +4,6 @@ __pycache__/
 data/
 chroma_db/
 
-# Document de l'école (tiers, non lié au code depuis le passage à Mistral)
-hugging-face-config/
-
 # Fichiers locaux : suivi personnel et sortie générée par evaluate.py
 AVANCEMENT.md
 evaluation_resultats.json

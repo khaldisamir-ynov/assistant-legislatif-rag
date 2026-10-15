@@ -4,23 +4,12 @@ Lancer :  chainlit run chainlit_app.py -w --port 8001
 Ouvrir :  http://localhost:8001
 (port 8001 pour ne pas entrer en conflit avec l'API FastAPI, sur 8000)
 """
-import time
-
 import chainlit as cl
 
-from app.embeddings import charger_modele
-from app.journal import journaliser_avis, journaliser_question
+from app.journal import journaliser_avis
 from app.llm_client import ErreurLLM
-from app.rag import repondre
-from app.retriever import collection
-
-LIBELLES_STATUT_COURTS = {
-    "promulgue": "promulguée",
-    "adopte": "adoptée",
-    "rejete": "rejetée",
-    "retire": "retirée",
-    "en_cours": "en cours",
-}
+from app.prompt import LIBELLES_STATUT
+from app.rag import prechauffer, repondre_et_journaliser
 
 
 @cl.set_starters
@@ -38,10 +27,8 @@ async def suggestions():
 
 @cl.on_chat_start
 async def demarrage():
-    # Même rôle que le lifespan de l'API : charger modèle et base avant la 1re question.
-    # make_async : ces appels sont bloquants, on les exécute dans un thread séparé.
-    await cl.make_async(charger_modele)()
-    await cl.make_async(collection)()
+    # Même rôle que le lifespan de l'API. make_async : appel bloquant, exécuté dans un thread.
+    await cl.make_async(prechauffer)()
 
 
 def mise_en_forme(resultat: dict) -> str:
@@ -51,7 +38,7 @@ def mise_en_forme(resultat: dict) -> str:
     lignes += [f"- {raison}" for raison in confiance["raisons"]]
     if resultat["sources"]:
         lignes += ["", "**Dossiers consultés :**"]
-        lignes += [f"- [{s['titre']}]({s['url']}) ({LIBELLES_STATUT_COURTS[s['statut']]})"
+        lignes += [f"- [{s['titre']}]({s['url']}) ({LIBELLES_STATUT[s['statut']]})"
                    for s in resultat["sources"]]
     return "\n".join(lignes)
 
@@ -62,14 +49,12 @@ async def question(message: cl.Message):
     if not 3 <= len(texte) <= 500:  # mêmes limites que l'API (modèle Question)
         await cl.Message(content="Merci de poser une question de 3 à 500 caractères.").send()
         return
-    debut = time.perf_counter()
     try:
-        resultat = await cl.make_async(repondre)(texte)
+        resultat = await cl.make_async(repondre_et_journaliser)(texte, "chainlit")
     except ErreurLLM as e:
-        journaliser_question("chainlit", texte, int((time.perf_counter() - debut) * 1000), erreur=str(e))
         await cl.Message(content=f"⚠️ Service momentanément indisponible : {e}").send()
         return
-    identifiant = journaliser_question("chainlit", texte, int((time.perf_counter() - debut) * 1000), resultat)
+    identifiant = resultat["id"]
     # Boutons d'avis sous la réponse : l'id relie l'avis à la question dans le journal
     boutons = [cl.Action(name="avis", label="👍 Utile", payload={"id": identifiant, "utile": True}),
                cl.Action(name="avis", label="👎 Pas utile", payload={"id": identifiant, "utile": False})]
