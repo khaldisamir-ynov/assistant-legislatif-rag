@@ -37,7 +37,9 @@ def indexer(nom: str, documents: list[dict]) -> int:
     collection.cache_clear()  # l'ancienne collection n'existe plus
     nouvelle = client().create_collection(
         name=nom,
-        metadata={"hnsw:space": "cosine"},  # distance = 1 - similarité cosinus
+        # cosine : distance = 1 - similarité cosinus. ef_search 500 au lieu de 100 : les scores e5 sont
+        # si tassés que la recherche approximative ratait 5 % des vrais voisins (mesuré le 15/10/2026)
+        configuration={"hnsw": {"space": "cosine", "ef_search": 500}},
         embedding_function=None,  # on fournit NOS vecteurs e5 ; Chroma ne doit rien calculer
     )
     for i in range(0, len(documents), TAILLE_LOT):
