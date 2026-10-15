@@ -5,7 +5,7 @@ C'est cette fonction que l'API appellera (étape 7).
 Test :  python -m app.rag "Quelles lois ont été promulguées récemment ?"
         python -m app.rag "..." --prompt     -> affiche le prompt sans appeler le LLM
 """
-from app.confiance import evaluer
+from app.confiance import est_un_refus, evaluer
 from app.llm_client import generer
 from app.prompt import construire_messages
 from app.retriever import rechercher
@@ -20,7 +20,7 @@ def repondre(question: str) -> dict:
     sources = [{"id": f["id"], "titre": f["metadonnees"]["titre"],
                 "statut": f["metadonnees"]["statut"], "url": f["metadonnees"]["url"]} for f in fiches]
     # Si le LLM ne sait pas, les fiches trouvées étaient hors sujet : ne pas les afficher.
-    if texte.startswith("Je ne sais pas"):
+    if est_un_refus(texte):
         sources = []
     # Confiance : chaque fait cité doit figurer dans ce qu'on a envoyé au LLM
     confiance = evaluer(texte, "\n".join(m["content"] for m in messages))

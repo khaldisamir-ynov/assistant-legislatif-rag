@@ -27,7 +27,11 @@ STATUTS = [
 ]
 # "Où en est le texte SUR les retraites ?" -> thème = "les retraites"
 # Appliqué à la question ORIGINALE (on garde les accents, utiles au modèle).
-MOTIF_THEME = r"\b(?:sur|concernant|relatifs? à|relatives? à|à propos d[eu]?|en matière d[e'’])\s*(.+)"
+MOTIF_THEME = r"\b(?:sur|contre|concernant|relatifs? à|relatives? à|à propos d[eu]?|en matière d[e'’])\s*(.+)"
+# Le thème s'arrête à la fin de la proposition. Constaté le 14/10/2026 (paires miroir) : sinon
+# « la fin de vie est une dérive dangereuse : où en est-elle » était vectorisé tel quel, et le
+# jugement de la question changeait les dossiers retrouvés.
+FIN_THEME = r"\s*(?:[,:;?!.]|\s(?:est|sont|a|ont|qui|ki)\b).*"
 
 
 @dataclass
@@ -83,7 +87,7 @@ def extraire_filtres(question: str, aujourd_hui: date | None = None) -> Filtres:
     # 4. Thème explicite
     m = re.search(MOTIF_THEME, question, flags=re.IGNORECASE)
     if m:
-        f.theme = m.group(1).strip(" ?.!")
+        f.theme = re.sub(FIN_THEME, "", m.group(1)).strip() or None
     return f
 
 

@@ -7,12 +7,18 @@ Trois stratégies selon la question (filtres extraits par app/filters.py) :
 
 Test :  python -m app.retriever "Quelles lois ont été promulguées récemment ?"
 """
+import re
+
 from app import config
 from app.embeddings import encoder_requete
 from app.filters import Filtres, extraire_filtres
 from app.stockage import chroma
 
 NB_RESULTATS = 5
+# Le modèle e5 ne connaît pas ces sigles (constaté le 14/10/2026 : avec « PLFSS », un mot de la
+# question comme « comptes publics » suffisait à faire passer le PLF devant le PLFSS).
+SIGLES = {r"\bPLFSS\b": "projet de loi de financement de la sécurité sociale",
+          r"\bPLF\b": "projet de loi de finances"}
 
 
 def collection():
@@ -21,6 +27,8 @@ def collection():
 
 
 def _semantique(texte: str, where: dict | None) -> list[dict]:
+    for sigle, developpe in SIGLES.items():
+        texte = re.sub(sigle, developpe, texte)
     r = collection().query(query_embeddings=[encoder_requete(texte)], n_results=NB_RESULTATS, where=where)
     # query() renvoie une liste de résultats PAR question : on prend [0]
     return [{"id": i, "texte": doc, "metadonnees": meta, "score": round(1 - dist, 3)}

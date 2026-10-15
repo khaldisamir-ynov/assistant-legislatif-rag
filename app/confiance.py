@@ -32,13 +32,20 @@ def _inconnus(motif: re.Pattern, reponse: str, contexte: str) -> list[str]:
     return list(dict.fromkeys(t for t in trouves if t not in connus))
 
 
+def est_un_refus(reponse: str) -> bool:
+    """« Je ne sais pas » sans aucun lien. Constaté le 14/10/2026 sur les questions orientées :
+    le LLM refuse parfois la partie jugement (« ce budget courageux ») puis donne les faits et
+    leurs liens. Cette réponse hybride est une vraie réponse, pas un refus."""
+    return reponse.startswith("Je ne sais pas") and not MOTIF_URL.search(reponse)
+
+
 def evaluer(reponse: str, contexte: str) -> dict:
     """Renvoie {"niveau", "libelle", "raisons"}.
 
     reponse  : texte généré par le LLM
     contexte : tout le texte envoyé au LLM (consignes, date du jour, fiches, question)
     """
-    if reponse.startswith("Je ne sais pas"):
+    if est_un_refus(reponse):
         return {"niveau": "refus", "libelle": LIBELLES_NIVEAU["refus"], "raisons": []}
 
     raisons = []
