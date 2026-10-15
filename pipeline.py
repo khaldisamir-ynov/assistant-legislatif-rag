@@ -45,14 +45,14 @@ def controler() -> bool:
 
 
 def stocker(forcer: bool) -> None:
-    if not controler():
+    fiches, nb_bruts = jsonl.lire(FICHES_JSONL), nb_dossiers_bruts()
+    if not qualite.valider(fiches, nb_bruts):
         if not forcer:
             print("[stocker]     ANNULÉ : contrôle bloquant en échec, la base actuelle est conservée")
             sys.exit(1)
         print("[stocker]     --forcer : indexation malgré le contrôle bloquant")
-    fiches = jsonl.lire(FICHES_JSONL)
     nb = chroma.indexer(config.CHROMA_COLLECTION, fiches)
-    qualite.enregistrer_reference(fiches, nb_dossiers_bruts())  # ce lot devient la référence du suivant
+    qualite.enregistrer_reference(fiches, nb_bruts)  # ce lot devient la référence du suivant
     print(f"[stocker]     {nb} documents dans la collection '{config.CHROMA_COLLECTION}'")
 
 

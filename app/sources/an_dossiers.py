@@ -6,6 +6,7 @@ actes. Aucune mise en forme ici : c'est le rôle de app/transform/.
 Test :  python -m app.sources.an_dossiers   -> télécharge et extrait le ZIP du jour
 """
 import json
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -29,6 +30,8 @@ def telecharger_et_extraire(force: bool = False) -> Path:
         ZIP_PATH.write_bytes(reponse.content)
         force = True  # nouveau ZIP => on ré-extrait
     if force or not DOSSIERS_DIR.exists():
+        # Sinon un dossier retiré de l'open data resterait sur le disque, indexé pour toujours
+        shutil.rmtree(DOSSIERS_DIR, ignore_errors=True)
         with zipfile.ZipFile(ZIP_PATH) as z:
             z.extractall(SOURCE_DIR)
     return DOSSIERS_DIR

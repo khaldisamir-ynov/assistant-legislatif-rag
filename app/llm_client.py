@@ -50,4 +50,7 @@ def generer(messages: list[dict]) -> str:
         raise ErreurLLM(f"LLM indisponible ({e.status_code}) : {explication}") from e
     except (APIConnectionError, APITimeoutError) as e:
         raise ErreurLLM("LLM injoignable (réseau ou délai dépassé)") from e
-    return reponse.choices[0].message.content.strip()
+    texte = reponse.choices[0].message.content
+    if not texte:  # None possible (filtre de contenu, coupure) : 503 lisible plutôt qu'un 500
+        raise ErreurLLM("le LLM a renvoyé une réponse vide")
+    return texte.strip()
