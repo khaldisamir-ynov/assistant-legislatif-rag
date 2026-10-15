@@ -22,6 +22,7 @@ import mlflow  # noqa: E402  (après les réglages ci-dessus)
 
 from app import config, llm_client  # noqa: E402
 from app.retriever import NB_RESULTATS, collection  # noqa: E402
+from app.transform.fiches_dossiers import NB_LIGNES_VECTORISEES  # noqa: E402
 
 ACTIF = bool(config.MLFLOW_TRACKING_URI)
 if ACTIF:
@@ -35,7 +36,8 @@ def parametres() -> dict:
     """Hyperparamètres du pipeline RAG, lus là où ils sont définis (ef_search : dans la base elle-même)."""
     return {"modele_embeddings": config.EMBEDDING_MODEL, "modele_llm": config.LLM_MODEL,
             "temperature": llm_client.TEMPERATURE, "max_tokens": llm_client.MAX_TOKENS,
-            "nb_fiches": NB_RESULTATS, "ef_search": collection().configuration["hnsw"]["ef_search"]}
+            "nb_fiches": NB_RESULTATS, "ef_search": collection().configuration["hnsw"]["ef_search"],
+            "lignes_vectorisees": NB_LIGNES_VECTORISEES}
 
 
 def _envoyer_requete(canal: str, question: str, latence_ms: int, identifiant: str,

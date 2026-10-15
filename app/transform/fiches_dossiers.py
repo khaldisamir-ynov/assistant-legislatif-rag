@@ -23,6 +23,10 @@ LIBELLES_STATUT = {
 # Les réunions de commission, nominations de rapporteurs... sont du bruit ici.
 SUFFIXES_CLES = ("-DEPOT", "-DEC", "-CONCLUSION", "-RTRINI", "-PROCACC", "PROM-PUB", "CMP-SAISIE")
 
+# Premières lignes de la fiche VECTORISÉES (3 = titre + type + statut ; suivi dans MLflow).
+# Les étapes clés, communes à toutes les fiches, diluaient le thème (« Sécu » ne retrouvait pas le PLFSS).
+NB_LIGNES_VECTORISEES = 3
+
 
 def est_une_loi(dossier: dict) -> bool:
     """Garde les projets/propositions de loi, exclut résolutions, rapports, missions, motions."""
@@ -168,9 +172,7 @@ def construire_fiche(dossier: dict, aujourd_hui: str | None = None) -> dict | No
     return {
         "id": dossier["uid"],
         "texte": "\n".join(lignes),             # fiche complète : lue par le LLM
-        # Texte court, VECTORISÉ : titre + type + statut. Les étapes clés, communes à
-        # toutes les fiches, diluaient le thème (constaté : « Sécu » ne retrouvait pas le PLFSS).
-        "texte_recherche": "\n".join(lignes[:3]),
+        "texte_recherche": "\n".join(lignes[:NB_LIGNES_VECTORISEES]),  # texte court, VECTORISÉ
         "metadonnees": metadonnees,
     }
 

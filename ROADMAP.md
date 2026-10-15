@@ -40,7 +40,7 @@ Le LLM est hébergé chez Mistral : on ne le quantifie pas. Ce serait possible a
 |---|---|---|
 | 8.1 ✅ | **Tracking des requêtes de production** : question, latence, confiance, nombre de fiches, filtres, modèles | `app/suivi.py`, expérience « production » |
 | 8.2 ✅ | **Chaque lancement d'`evaluate.py` = une expérience** : paramètres (texte vectorisé, `ef_search`, nombre de fiches, LLM, modèle d'embeddings) et métriques (retriever, réponse, neutralité, latence) | `app/suivi.py`, expérience « evaluation » |
-| 8.3 | **1re expérience : vectoriser le titre seul** au lieu de titre + type + statut. Diagnostic : dossier attendu 1er dans 21 cas sur 21 contre 19, écart de score ×2,5. Ajouter d'abord un cas « Sécu » à la base de test | Deux runs comparés |
+| 8.3 ✅ | **1re expérience : vectoriser le titre seul** au lieu de titre + type + statut (cas « Sécu » ajouté d'abord). **Rejeté** (15/10/2026, 31 questions) : retriever 84 % contre 92 %, réussite 26/31 contre 29/31. Sans le statut, la loi promulguée sur les mineurs passe derrière une proposition en cours au titre quasi identique | Runs « evaluation » comparés, paramètre `lignes_vectorisees` (3 conservé) |
 | 8.4 | Enrichir la base de test : questions 👎 du journal, statuts déduits vérifiés sur un échantillon | `cas_evaluation.json` |
 | 8.5 | Qualité des réponses : confiance date + étape, suivi de la neutralité, éventuellement un LLM juge | Nouvelles métriques suivies |
 
