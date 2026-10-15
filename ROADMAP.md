@@ -19,10 +19,10 @@ Principe : **mesurer d'abord, renforcer ensuite, étendre enfin.** Chaque phase 
 
 | # | Travail | Livrable |
 |---|---|---|
-| 1.1 | **Base de test de référence** : pour chaque question, la source, les faits et le comportement attendus (réponse, refus, neutralité) | Fichier de cas versionné, lu par `evaluate.py` |
+| 1.1 ✅ | **Base de test de référence** : pour chaque question, la source, les faits et le comportement attendus (réponse, refus, neutralité) | `cas_evaluation.json`, lu par `evaluate.py` |
 | 1.2 | Enrichir la base avec les questions 👎 et les échecs du journal | Cas ajoutés en 1.1 |
 | 1.3 | Vérifier le statut déduit sur un échantillon de dossiers réels ; lister les questions sans réponse possible (texte de loi, auteurs) | Tableau de vérification |
-| 1.4 | Documenter les ratés du retriever (mauvais dossier, voisin parasite, filtre manqué) | Rapport de ratés, qui alimente 4.2 |
+| 1.4 | Documenter les ratés du retriever (mauvais dossier, voisin parasite, filtre manqué). 1er raté connu : « troubles à l'ordre public » ramène le droit de grève ; la loi promulguée DLR5L17N53980 est 7e (score 0,820 contre 0,823 pour le 1er), et le LLM répond qu'« aucune proposition n'a abouti » | Rapport de ratés, qui alimente 4.2 |
 
 ## Phase 2 : Renforcer
 
