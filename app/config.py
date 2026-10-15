@@ -40,3 +40,6 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.mistral.ai/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL", "ministral-14b-latest")
+
+# --- Suivi MLflow (app/suivi.py) : URL du serveur ; vide = suivi désactivé ---
+MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")

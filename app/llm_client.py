@@ -10,6 +10,10 @@ from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
 from app import config
 
 
+TEMPERATURE = 0.1  # faible : on veut des réponses factuelles et stables
+MAX_TOKENS = 800
+
+
 class ErreurLLM(Exception):
     """Erreur lisible, remontée à l'API au lieu d'une trace Python."""
 
@@ -42,8 +46,8 @@ def generer(messages: list[dict]) -> str:
         reponse = client().chat.completions.create(
             model=config.LLM_MODEL,
             messages=messages,
-            temperature=0.1,  # faible : on veut des réponses factuelles et stables
-            max_tokens=800,
+            temperature=TEMPERATURE,
+            max_tokens=MAX_TOKENS,
         )
     except APIStatusError as e:
         explication = MESSAGES_HTTP.get(e.status_code, "erreur du fournisseur")

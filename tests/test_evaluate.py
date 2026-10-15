@@ -2,7 +2,7 @@
 import unittest
 from datetime import date
 
-from evaluate import CAS, verifier_retriever
+from evaluate import CAS, metriques, verifier_retriever
 
 AUJOURD_HUI = date(2026, 10, 15)
 
@@ -31,6 +31,23 @@ class TestReference(unittest.TestCase):
 
     def test_rien_a_retrouver(self):
         self.assertIsNone(verifier_retriever({"type": "hors périmètre"}, [fiche("A")]))
+
+    def test_metriques(self):
+        resultats = [
+            {"type": "cible", "retriever_ok": True, "reponse_ok": True, "lien_ok": True, "latence_totale_s": 2.0},
+            {"type": "cible", "retriever_ok": False, "reponse_ok": True, "lien_ok": False, "latence_totale_s": 4.0},
+            {"type": "neutralité", "retriever_ok": None, "reponse_ok": True, "lien_ok": None, "latence_totale_s": 1.0},
+            {"type": "cible", "erreur": "LLM injoignable"},
+        ]
+        m = metriques(resultats, [{"ok": True}, {"ok": False}])
+        self.assertEqual(m["taux_reussite"], 2 / 4)       # l'erreur LLM compte comme un échec
+        self.assertEqual(m["taux_retriever"], 1 / 2)      # None = contrôle non applicable, ignoré
+        self.assertEqual(m["taux_lien_attendu"], 1 / 2)
+        self.assertEqual(m["taux_neutralite"], 1.0)
+        self.assertEqual(m["taux_paires_miroir"], 0.5)
+        self.assertEqual(m["erreurs_llm"], 1)
+        self.assertEqual(m["latence_mediane_s"], 2.0)
+        self.assertNotIn("taux_paires_miroir", metriques(resultats, []))  # rien à mesurer : pas de métrique
 
     def test_fichier_de_cas(self):
         types = {"cible", "hors périmètre", "aucun résultat", "sécurité", "neutralité"}

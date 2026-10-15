@@ -13,6 +13,7 @@ from app.journal import journaliser_question
 from app.llm_client import ErreurLLM, generer
 from app.prompt import construire_messages
 from app.retriever import collection, rechercher
+from app.suivi import enregistrer_requete
 
 
 def prechauffer() -> None:
@@ -39,16 +40,20 @@ def repondre(question: str) -> dict:
 
 
 def repondre_et_journaliser(question: str, canal: str) -> dict:
-    """repondre() + journal des questions. Ajoute "id" (à renvoyer avec l'avis) et "latence_ms".
-    Une panne du LLM est journalisée, puis l'ErreurLLM est relancée pour l'appelant."""
+    """repondre() + journal des questions + suivi MLflow. Ajoute "id" (à renvoyer avec l'avis) et
+    "latence_ms". Une panne du LLM est enregistrée, puis l'ErreurLLM est relancée pour l'appelant."""
     debut = time.perf_counter()
     try:
         resultat = repondre(question)
     except ErreurLLM as e:
-        journaliser_question(canal, question, int((time.perf_counter() - debut) * 1000), erreur=str(e))
+        latence_ms = int((time.perf_counter() - debut) * 1000)
+        identifiant = journaliser_question(canal, question, latence_ms, erreur=str(e))
+        enregistrer_requete(canal, question, latence_ms, identifiant, erreur=str(e))
         raise
     latence_ms = int((time.perf_counter() - debut) * 1000)
-    return {**resultat, "id": journaliser_question(canal, question, latence_ms, resultat), "latence_ms": latence_ms}
+    identifiant = journaliser_question(canal, question, latence_ms, resultat)
+    enregistrer_requete(canal, question, latence_ms, identifiant, resultat)
+    return {**resultat, "id": identifiant, "latence_ms": latence_ms}
 
 
 if __name__ == "__main__":

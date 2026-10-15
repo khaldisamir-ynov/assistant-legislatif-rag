@@ -19,6 +19,7 @@ import sys
 import time
 from datetime import date, timedelta
 from pathlib import Path
+from statistics import median
 
 from app.confiance import MOTIF_DATE, est_un_refus
 from app.embeddings import encoder_passages
@@ -26,6 +27,7 @@ from app.llm_client import ErreurLLM
 from app.prompt import CONSIGNES
 from app.rag import repondre
 from app.retriever import rechercher
+from app.suivi import enregistrer_evaluation
 
 # Base de test de référence : pour chaque question, le comportement attendu (type), et selon le cas
 # le dossier attendu en 1re position (source), les faits attendus (faits : chacun est une liste de
@@ -191,6 +193,26 @@ def evaluer(cas):
             **({"problemes_neutralite": problemes} if cas["type"] == "neutralité" else {})}
 
 
+def metriques(resultats: list[dict], comparaisons: list[dict]) -> dict:
+    """Taux de 0 à 1 suivis dans MLflow. Chaque taux ne compte que les questions où le contrôle s'applique ;
+    une erreur LLM compte comme un échec dans taux_reussite."""
+    ok = [r for r in resultats if "erreur" not in r]
+
+    def taux(valeurs):
+        valeurs = [v for v in valeurs if v is not None]
+        return sum(valeurs) / len(valeurs) if valeurs else None
+
+    m = {"taux_reussite": taux([bool(r.get("reponse_ok") and r.get("retriever_ok") is not False) for r in resultats]),
+         "taux_retriever": taux([r["retriever_ok"] for r in ok]),
+         "taux_reponse": taux([r["reponse_ok"] for r in ok]),
+         "taux_lien_attendu": taux([r["lien_ok"] for r in ok]),
+         "taux_neutralite": taux([r["reponse_ok"] for r in ok if r["type"] == "neutralité"]),
+         "taux_paires_miroir": taux([c["ok"] for c in comparaisons]),
+         "erreurs_llm": len(resultats) - len(ok),
+         "latence_mediane_s": median(r["latence_totale_s"] for r in ok) if ok else None}
+    return {k: v for k, v in m.items() if v is not None}
+
+
 def symbole(v):
     return {True: "OK", False: "ECHEC", None: "-"}[v]
 
@@ -238,3 +260,7 @@ if __name__ == "__main__":
     with open("evaluation_resultats.json", "w", encoding="utf-8") as f:
         json.dump({"questions": resultats, "paires_miroir": comparaisons}, f, ensure_ascii=False, indent=2)
     print("\nRéponses complètes : evaluation_resultats.json (à relire : exactitude, neutralité)")
+    # La base de test est jointe au run : on sait sur quelles questions chaque score a été obtenu
+    enregistrer_evaluation("neutralite" if "--neutralite" in sys.argv else "complet",
+                           metriques(resultats, comparaisons),
+                           ["evaluation_resultats.json", str(Path(__file__).with_name("cas_evaluation.json"))])

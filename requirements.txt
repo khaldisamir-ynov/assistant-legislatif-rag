@@ -15,6 +15,10 @@ numpy>=1.26
 # --- LLM (client compatible OpenAI : API Mistral aujourd'hui, vLLM/Ollama demain) ---
 openai>=1.40
 
+# --- Suivi MLOps : client MLflow seul. Le serveur et son tableau de bord tournent dans leur propre
+#     conteneur (voir .env.example) : le paquet mlflow complet alourdirait l'image de plusieurs centaines de Mo ---
+mlflow-skinny>=3.17
+
 # --- Utilitaires ---
 python-dotenv>=1.0
 requests>=2.32

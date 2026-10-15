@@ -38,8 +38,8 @@ Le LLM est hébergé chez Mistral : on ne le quantifie pas. Ce serait possible a
 
 | # | Travail | Livrable |
 |---|---|---|
-| 8.1 | **Tracking des requêtes de production** : question, latence, confiance, nombre de fiches, filtres, modèles | `app/rag.py` → MLflow |
-| 8.2 | **Chaque lancement d'`evaluate.py` = une expérience** : paramètres (texte vectorisé, `ef_search`, nombre de fiches, LLM, modèle d'embeddings) et métriques (retriever, réponse, neutralité, latence) | `evaluate.py` → MLflow |
+| 8.1 ✅ | **Tracking des requêtes de production** : question, latence, confiance, nombre de fiches, filtres, modèles | `app/suivi.py`, expérience « production » |
+| 8.2 ✅ | **Chaque lancement d'`evaluate.py` = une expérience** : paramètres (texte vectorisé, `ef_search`, nombre de fiches, LLM, modèle d'embeddings) et métriques (retriever, réponse, neutralité, latence) | `app/suivi.py`, expérience « evaluation » |
 | 8.3 | **1re expérience : vectoriser le titre seul** au lieu de titre + type + statut. Diagnostic : dossier attendu 1er dans 21 cas sur 21 contre 19, écart de score ×2,5. Ajouter d'abord un cas « Sécu » à la base de test | Deux runs comparés |
 | 8.4 | Enrichir la base de test : questions 👎 du journal, statuts déduits vérifiés sur un échantillon | `cas_evaluation.json` |
 | 8.5 | Qualité des réponses : confiance date + étape, suivi de la neutralité, éventuellement un LLM juge | Nouvelles métriques suivies |
