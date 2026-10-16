@@ -25,14 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
       - name: Modèle d'embeddings en cache (~1,1 Go, téléchargé une seule fois)
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/huggingface
           key: hf-multilingual-e5-base
@@ -46,7 +46,7 @@ jobs:
         if: always()
         run: |
           { echo '```'; grep -E "^(Bilan|Neutralité|Juge|Tokens|ÉCHEC)" sortie.txt || echo "pas de bilan"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: evaluation-resultats
