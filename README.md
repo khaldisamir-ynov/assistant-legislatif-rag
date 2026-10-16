@@ -28,7 +28,7 @@ Diagrammes [niveau 2 (conteneurs)](architecture-c4-model/c4-model-niveau-2.png) 
 1. `filters.py` : période (« récemment » = 90 jours), statut et thème extraits par regex ;
 2. `retriever.py` : 5 fiches, par recherche sémantique sur le thème ou la question, ou les plus récentes pour une liste temporelle ;
 3. `prompt.py` : 7 règles (fiches seules, « Je ne sais pas », liens, neutralité) + date du jour + fiches ;
-4. `llm_client.py` : LLM via une API compatible OpenAI (Mistral `ministral-14b-latest` par défaut) ;
+4. `llm_client.py` : LLM via une API compatible OpenAI : Qwen3.8-27B via Hugging Face (Academia Hub de l'école), ou Mistral `ministral-14b-latest` ;
 5. `confiance.py` : contrôle d'ancrage de la réponse ; sources construites par le code, pas par le LLM ;
 6. `journal.py` (JSONL) et `suivi.py` (MLflow) : chaque question, sa réponse, sa latence, puis l'avis 👍/👎.
 
@@ -40,10 +40,12 @@ Python 3.12.
 python -m venv .venv
 .venv\Scripts\activate          # Windows ; Linux/macOS : source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env            # puis renseigner LLM_API_KEY (https://console.mistral.ai)
+cp .env.example .env            # puis renseigner LLM_API_KEY : token Hugging Face (https://huggingface.co/settings/tokens) ou clé Mistral
 ```
 
-Le modèle d'embeddings (~1,1 Go) est téléchargé au premier lancement, puis lu sur le disque.
+Le modèle d'embeddings (~1,1 Go) est téléchargé au premier lancement, puis lu sur le disque. Il reste en local : Hugging Face ne sert pas e5-base en vecteurs, et e5-large, qui l'est, classe moins bien (20/31).
+
+Avec Hugging Face, `HF_BILL_TO` facture le budget étudiant de l'école et `LLM_REASONING_EFFORT=none` coupe la réflexion de Qwen3 (sinon elle épuise les tokens et la réponse arrive vide) : voir `.env.example`.
 
 ## Lancement
 
@@ -83,7 +85,7 @@ python analyse_logs.py --jours 7       # vraies questions du journal : confiance
 
 `evaluate.py` mesure, pour chaque question de la base de test de référence (`cas_evaluation.json`) : le retriever (dossier attendu en 1re position, ou critères d'une liste), la réponse (lien et faits attendus, ou « Je ne sais pas »), la fuite des consignes, la neutralité (opinions, termes chargés, paires de questions miroir) et la latence. Résultats dans `evaluation_resultats.json` et dans MLflow.
 
-Dernier résultat (15/10/2026) : **29/31** questions réussies, retriever 92 %, latence médiane 2,1 s.
+Dernier résultat (16/10/2026, Qwen3.8-27B via Hugging Face) : **29/31** questions réussies, retriever 92 %, latence médiane 0,6 s (Mistral, 15/10/2026 : 29/31, 2,1 s).
 
 ## Limites
 
@@ -93,4 +95,5 @@ Dernier résultat (15/10/2026) : **29/31** questions réussies, retriever 92 %, 
 - **Filtres par regex** : « récemment » vaut 90 jours ; une formulation imprévue n'est pas filtrée.
 - **Confiance** : vérifie que chaque fait cité existe dans les fiches, pas qu'il est attribué à la bonne étape. Les réponses restent à vérifier sur le site de l'Assemblée.
 - **Ingestion** : la base est vide pendant la reconstruction (1 à 3 min).
+- **Limite de débit du fournisseur** (Cerebras via Hugging Face) : des questions en rafale peuvent recevoir une erreur 429 ; observé sur certains passages de `evaluate.py`.
 - **Pas encore d'authentification** ni de filtre de données personnelles (itération 7 de la roadmap).
