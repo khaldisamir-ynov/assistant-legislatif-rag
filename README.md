@@ -81,6 +81,7 @@ python -m unittest discover tests -v   # tests unitaires, sans LLM ni base (lanc
 python evaluate.py                     # 31 questions de cas_evaluation.json (LLM et base requis)
 python evaluate.py --neutralite        # les 16 questions orientées seulement
 python evaluate.py --juge              # en plus : un LLM juge relit chaque réponse
+python evaluate.py --min-reussies 29  # code de sortie 1 sous ce score (évaluation GitHub Actions du lundi)
 python analyse_logs.py --jours 7       # vraies questions du journal : confiance, avis, latence
 ```
 

@@ -4,6 +4,7 @@ lues dans la base de test de référence cas_evaluation.json.
 Usage :  python evaluate.py               -> tout : tableau de synthèse + evaluation_resultats.json
          python evaluate.py --neutralite  -> seulement les questions de neutralité
          python evaluate.py --juge        -> en plus, un LLM juge relit chaque réponse (app/juge.py)
+         python evaluate.py --min-reussies 29 -> code de sortie 1 sous ce score (CI : .github/workflows/evaluation.yml)
 
 Pour chaque question on mesure, par rapport à la référence :
 - la latence (totale, et part du retriever) ;
@@ -41,6 +42,9 @@ CAS = json.loads(Path(__file__).with_name("cas_evaluation.json").read_text(encod
 # Type où la bonne réponse est "Je ne sais pas", sans aucune source
 TYPES_REFUS = {"hors périmètre"}
 JUGE = "--juge" in sys.argv
+# Limite de débit par minute du fournisseur (Cerebras) : une 429 est réessayée au lieu de compter comme un échec
+ATTENTE_429_S = 30
+ATTENTE_429_TENTATIVES = 2
 
 # ---------------------------------------------------------------------------------------------
 # Neutralité
@@ -161,12 +165,17 @@ def evaluer(cas):
     retriever_ok = verifier_retriever(cas, fiches)
     textes_fiches = "\n".join(f["texte"] for f in fiches)
 
-    t0 = time.perf_counter()
-    try:
-        r = repondre(q)                            # chaîne complète (retriever + LLM)
-    except ErreurLLM as e:
-        return {**cas, "erreur": str(e)}
-    t_total = time.perf_counter() - t0
+    for tentative in range(1, ATTENTE_429_TENTATIVES + 2):
+        t0 = time.perf_counter()
+        try:
+            r = repondre(q)                        # chaîne complète (retriever + LLM)
+            break
+        except ErreurLLM as e:
+            if "(429)" not in str(e) or tentative > ATTENTE_429_TENTATIVES:
+                return {**cas, "erreur": str(e)}
+            print(f"429 sur « {q[:40]} » : nouvelle tentative dans {ATTENTE_429_S} s")
+            time.sleep(ATTENTE_429_S)
+    t_total = time.perf_counter() - t0             # dernière tentative seule : l'attente n'est pas de la latence
 
     juge = None
     if JUGE:  # le juge voit ce que l'assistant a vu : mêmes consignes, mêmes fiches (recherche déterministe)
@@ -316,3 +325,8 @@ if __name__ == "__main__":
     enregistrer_evaluation("neutralite" if "--neutralite" in sys.argv else "complet",
                            m, ["evaluation_resultats.json", str(Path(__file__).with_name("cas_evaluation.json"))],
                            {"modele_juge": config.LLM_JUGE_MODEL} if JUGE else None)
+    if "--min-reussies" in sys.argv:
+        seuil = int(sys.argv[sys.argv.index("--min-reussies") + 1])
+        if reussis < seuil:
+            print(f"ÉCHEC : {reussis}/{len(resultats)} questions réussies, minimum {seuil}")
+            sys.exit(1)
