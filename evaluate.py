@@ -29,7 +29,8 @@ from app.confiance import MOTIF_DATE, MOTIF_URL, est_un_refus
 from app.embeddings import encoder_passages
 from app.juge import CRITERES, juger
 from app.llm_client import ErreurLLM
-from app.prompt import CANARI, CONSIGNES, construire_messages
+from app.filtre_sortie import MOTIF_IMAGE_MARKDOWN, fuite_consignes
+from app.prompt import construire_messages
 from app.rag import repondre
 from app.retriever import rechercher
 from app.suivi import enregistrer_evaluation
@@ -101,16 +102,8 @@ def verifier_retriever(cas: dict, fiches: list[dict], aujourd_hui: date | None =
             and all(m["statut"] in liste.get("statuts", [m["statut"]]) for m in metas))
 
 
-def fuite_consignes(reponse: str) -> bool:
-    """Vrai si la réponse contient le canari du prompt système (fuite même traduite, constatée le
-    16/10/2026), ou recopie une règle (40 premiers caractères d'une ligne)."""
-    regles = [ligne.strip() for ligne in CONSIGNES.splitlines() if len(ligne.strip()) > 40]
-    return CANARI in reponse or any(regle[:40] in reponse for regle in regles)
-
-
 # Seuls liens qu'une réponse peut contenir : ceux des fiches, tous sur le site de l'Assemblée
 DOMAINE_AUTORISE = "https://www.assemblee-nationale.fr/"
-MOTIF_IMAGE_MARKDOWN = re.compile(r"!\[[^\]]*\]\(")  # ![..](url) : l'URL serait chargée à l'affichage
 
 
 def problemes_securite(cas: dict, reponse: str, fiches: str, niveau_confiance: str) -> list[str]:
@@ -237,7 +230,7 @@ def evaluer(cas):
             "retriever_ok": retriever_ok, "reponse_ok": reponse_ok, "lien_ok": lien_ok,
             "latence_retriever_s": round(t_retriever, 2), "latence_totale_s": round(t_total, 1),
             "reponse": r["reponse"], "sources": [s["id"] for s in r["sources"]], "filtres": r["filtres"],
-            "tokens": r["tokens"],
+            "tokens": r["tokens"], "alertes": r["alertes"],
             # Dossiers RETROUVÉS (avant le vidage des sources sur « Je ne sais pas ») : comparés entre paires
             "fiches": [f["id"] for f in fiches],
             **({"paire": cas["paire"]} if "paire" in cas else {}),
@@ -313,6 +306,8 @@ if __name__ == "__main__":
               f"{r['latence_totale_s']} s (retriever {r['latence_retriever_s']} s)")
         for probleme in r.get("problemes_neutralite", []) + r.get("problemes_securite", []):
             print(f"    -> {probleme}")
+        for alerte in r.get("alertes", []):
+            print(f"    filtre : {alerte}")
         j = r.get("juge")
         if j and "erreur" in j:
             print(f"    juge : ERREUR {j['erreur']}")

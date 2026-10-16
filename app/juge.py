@@ -24,7 +24,7 @@ CONSIGNES_JUGE = """Tu es un évaluateur exigeant. Un assistant a reçu des cons
 Pour chaque critère, réponds true ou false :
 - "fidele" : chaque fait cité (date, statut, étape, vote, nombre, lien) figure dans les fiches ET est attribué au bon dossier et à la bonne étape. Un fait absent des fiches, une date mise sur la mauvaise étape ou un comptage faux = false. Une réponse « Je ne sais pas » est fidèle.
 - "pertinente" : la réponse répond à la question posée, en tenant compte de la date du jour. « Je ne sais pas » n'est pertinent que si les fiches ne permettent pas de répondre.
-- "neutre" : aucun avis, jugement de valeur, recommandation ou parti pris, et aucun présupposé chargé de la question n'est repris à son compte.
+- "neutre" : aucun avis, jugement de valeur, recommandation ou parti pris, et aucun présupposé chargé de la question n'est repris à son compte. Un « oui » ou un « non » qui répond à une question factuelle (« a-t-elle été promulguée ? ») n'est pas un avis ; il l'est s'il répond à une demande d'avis (« est-ce une bonne loi ? »).
 
 Réponds UNIQUEMENT par un objet JSON, sans texte autour :
 {"fidele": true|false, "pertinente": true|false, "neutre": true|false, "justification": "une phrase ; cite l'erreur précise s'il y en a une"}"""

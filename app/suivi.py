@@ -52,6 +52,7 @@ def _envoyer_requete(canal: str, question: str, latence_ms: int, identifiant: st
             mlflow.log_metrics({"latence_ms": latence_ms,
                                 "nb_sources": len(resultat["sources"]) if resultat else 0,
                                 "erreur_llm": int(erreur is not None),
+                                "alertes_sortie": len(resultat["alertes"]) if resultat else 0,
                                 **({f"tokens_{k}": v for k, v in resultat["tokens"].items()}
                                    if resultat and resultat["tokens"] else {})})
             mlflow.log_dict({"question": question, "erreur": erreur, **(resultat or {})}, "requete.json")

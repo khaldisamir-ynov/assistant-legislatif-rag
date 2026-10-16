@@ -9,6 +9,7 @@ import time
 
 from app.confiance import est_un_refus, evaluer
 from app.embeddings import charger_modele
+from app.filtre_sortie import filtrer
 from app.journal import journaliser_question
 from app.llm_client import ErreurLLM, generer
 from app.prompt import construire_messages
@@ -26,6 +27,8 @@ def repondre(question: str) -> dict:
     filtres, fiches = rechercher(question)
     messages = construire_messages(question, fiches, filtres)
     texte, tokens = generer(messages)  # peut lever ErreurLLM
+    # Le code impose ce que le prompt demande : liens des fiches seulement, pas d'image, pas de fuite
+    texte, alertes = filtrer(texte, "\n".join(f["texte"] for f in fiches))
     # Les sources sont construites par le CODE à partir des métadonnées,
     # pas recopiées par le LLM : elles sont donc toujours exactes.
     sources = [{"id": f["id"], "titre": f["metadonnees"]["titre"],
@@ -37,7 +40,7 @@ def repondre(question: str) -> dict:
     confiance = evaluer(texte, "\n".join(m["content"] for m in messages))
     # Les filtres appliqués sont renvoyés aussi : précieux pour déboguer et évaluer
     return {"reponse": texte, "sources": sources, "filtres": filtres.where(), "confiance": confiance,
-            "tokens": tokens}
+            "tokens": tokens, "alertes": alertes}
 
 
 def repondre_et_journaliser(question: str, canal: str) -> dict:

@@ -50,6 +50,8 @@ def main():
     print(f"\nQuestions : {len(questions)}   "
           + "   ".join(f"{canal} {n}" for canal, n in Counter(q["canal"] for q in questions).items()))
     print(f"Erreurs LLM : {pourcentage(len(questions) - len(reussies), len(questions))}")
+    filtrees = [q for q in reussies if q.get("alertes")]  # champ absent avant le 16/10/2026
+    print(f"Sorties filtrées (lien, image, fuite) : {pourcentage(len(filtrees), len(reussies))}")
 
     print("\nConfiance (calculée par le code) :")
     niveaux = Counter(q["confiance"] for q in reussies)
