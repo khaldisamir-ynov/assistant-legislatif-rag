@@ -40,6 +40,10 @@ EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "intfloat/multilingual-e5-base")
 LLM_BASE_URL = os.getenv("LLM_BASE_URL", "https://api.mistral.ai/v1")
 LLM_API_KEY = os.getenv("LLM_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL", "ministral-14b-latest")
+# Hugging Face (router.huggingface.co) : organisation facturée, ex. le budget étudiant de l'école ; vide = compte perso
+HF_BILL_TO = os.getenv("HF_BILL_TO")
+# Modèles à raisonnement (ex. Qwen3) : "none" coupe la réflexion, qui sinon consomme les MAX_TOKENS ; vide = non envoyé
+LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT")
 
 # --- Suivi MLflow (app/suivi.py) : URL du serveur ; vide = suivi désactivé ---
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")

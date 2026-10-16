@@ -1,11 +1,11 @@
 """Client LLM compatible OpenAI.
 
-Le même code parle à l'API Mistral, à vLLM ou à Ollama :
+Le même code parle à l'API Mistral, à Hugging Face, à vLLM ou à Ollama :
 seules LLM_BASE_URL, LLM_API_KEY et LLM_MODEL changent (dans .env).
 """
 from functools import lru_cache
 
-from openai import APIConnectionError, APIStatusError, APITimeoutError, OpenAI
+from openai import NOT_GIVEN, APIConnectionError, APIStatusError, APITimeoutError, OpenAI
 
 from app import config
 
@@ -36,6 +36,7 @@ def client() -> OpenAI:
         api_key=config.LLM_API_KEY,
         timeout=60,       # secondes : au-delà, on abandonne
         max_retries=2,    # nouvelles tentatives automatiques (erreurs réseau, 429, 5xx)
+        default_headers={"X-HF-Bill-To": config.HF_BILL_TO} if config.HF_BILL_TO else None,
     )
 
 
@@ -48,6 +49,7 @@ def generer(messages: list[dict]) -> str:
             messages=messages,
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,
+            reasoning_effort=config.LLM_REASONING_EFFORT or NOT_GIVEN,  # Mistral refuserait ce paramètre
         )
     except APIStatusError as e:
         explication = MESSAGES_HTTP.get(e.status_code, "erreur du fournisseur")

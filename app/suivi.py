@@ -36,6 +36,7 @@ def parametres() -> dict:
     """Hyperparamètres du pipeline RAG, lus là où ils sont définis (ef_search : dans la base elle-même)."""
     return {"modele_embeddings": config.EMBEDDING_MODEL, "modele_llm": config.LLM_MODEL,
             "temperature": llm_client.TEMPERATURE, "max_tokens": llm_client.MAX_TOKENS,
+            "reasoning_effort": config.LLM_REASONING_EFFORT,
             "nb_fiches": NB_RESULTATS, "ef_search": collection().configuration["hnsw"]["ef_search"],
             "lignes_vectorisees": NB_LIGNES_VECTORISEES}
 
