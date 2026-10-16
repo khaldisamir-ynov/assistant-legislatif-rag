@@ -14,7 +14,8 @@ Suit les itérations 6 à 9 du sujet. **Ordre conseillé : 8 → 6 → 7 → 9.*
 | Suivi | Journal des questions en production, `analyse_logs.py` ; MLflow : un run par question (« production ») et par évaluation (« evaluation »), avec les hyperparamètres |
 | Évaluation | Base de test de référence `cas_evaluation.json` (31 questions : 15 générales, 16 orientées), tests unitaires. Résultat : 29/31 (16/10/2026, Qwen3.8-27B ; 29/31 avec Mistral le 15/10) |
 | Livraison | Image Docker unique (API, Chainlit, pipeline), 2,73 Go, clé et données hors image |
-| Automatisation | GitHub Actions : tests unitaires à chaque push et pull request (`tests.yml`) ; évaluation complète chaque lundi et à la demande (`evaluation.yml` : index du jour reconstruit, `evaluate.py --juge`, échec sous 29/31) |
+| Automatisation | GitHub Actions : tests unitaires à chaque push et pull request (`tests.yml`) ; évaluation complète chaque lundi et à la demande (`evaluation.yml` : index du jour reconstruit, `evaluate.py --juge`, échec sous 29/31). Actions sous Node 24 (checkout v7, setup-python v7, cache v6, upload-artifact v7) |
+| Présentation | Deck de 17 slides, de A à Z (besoin, données, recherche, LLM, confiance, évaluation, LLM juge, expériences, exploitation, limites), notes pour l'oral : Artifact Claude privé, à partager depuis son menu Share |
 
 ## Itération 6 : Optimisation (faire mieux avec moins)
 
@@ -58,6 +59,7 @@ Le LLM est hébergé via Hugging Face (Cerebras) : on ne le quantifie pas. Ce se
 | 9.2 | **Estimation budgétaire pour 1 000 utilisateurs par jour** : tokens LLM (Hugging Face Inference Providers, budget de l'école), hébergement Azure (API, Chainlit, pipeline), stockage, MLflow. Hypothèses écrites (questions par utilisateur, pics) | Fichier d'estimation |
 | 9.3 ✅ | **`README.md`** : objectif, architecture, installation, lancement, évaluation, limites | `README.md` |
 | 9.4 | Optionnel : comparer coût et qualité de plusieurs LLM (MLflow + base de test). **En partie** (16/10/2026) : Mistral `ministral-14b-latest` et Qwen3.8-27B, tous deux à 29/31, latence médiane 2,1 s contre 0,6 s ; reste le coût | Tableau comparatif |
+| 9.5 ✅ | **Support de présentation** (16/10/2026) : deck de 17 slides sur les chiffres du 15 et du 16/10, export PDF ou PowerPoint | Artifact Claude « Assistant législatif RAG » |
 
 **Livrable final du sujet :** un dépôt Git complet (code, Dockerfile, README.md, estimation budgétaire).
 
