@@ -25,7 +25,7 @@ def prechauffer() -> None:
 def repondre(question: str) -> dict:
     filtres, fiches = rechercher(question)
     messages = construire_messages(question, fiches, filtres)
-    texte = generer(messages)  # peut lever ErreurLLM
+    texte, tokens = generer(messages)  # peut lever ErreurLLM
     # Les sources sont construites par le CODE à partir des métadonnées,
     # pas recopiées par le LLM : elles sont donc toujours exactes.
     sources = [{"id": f["id"], "titre": f["metadonnees"]["titre"],
@@ -36,7 +36,8 @@ def repondre(question: str) -> dict:
     # Confiance : chaque fait cité doit figurer dans ce qu'on a envoyé au LLM
     confiance = evaluer(texte, "\n".join(m["content"] for m in messages))
     # Les filtres appliqués sont renvoyés aussi : précieux pour déboguer et évaluer
-    return {"reponse": texte, "sources": sources, "filtres": filtres.where(), "confiance": confiance}
+    return {"reponse": texte, "sources": sources, "filtres": filtres.where(), "confiance": confiance,
+            "tokens": tokens}
 
 
 def repondre_et_journaliser(question: str, canal: str) -> dict:

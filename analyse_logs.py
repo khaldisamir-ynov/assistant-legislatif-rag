@@ -74,6 +74,13 @@ def main():
         print(f"\nLatence : médiane {median(latences) / 1000:.1f} s, "
               f"90e centile {centile(latences, 0.9) / 1000:.1f} s, max {max(latences) / 1000:.1f} s")
 
+    # Tokens : absents des questions journalisées avant leur suivi (16/10/2026)
+    tokens = [q["tokens"] for q in reussies if q.get("tokens")]
+    if tokens:
+        entree, sortie = sum(t["entree"] for t in tokens), sum(t["sortie"] for t in tokens)
+        print(f"\nTokens ({len(tokens)} réponses) : {entree + sortie} au total, {entree} en entrée, {sortie} en sortie ; "
+              f"par question {entree / len(tokens):.0f} + {sortie / len(tokens):.0f}")
+
     # À relire en priorité : avis négatif, puis confiance faible, puis refus (= trou dans les données ?)
     priorite = {"faible": 1, "refus": 2, "a_verifier": 3}
     a_relire = sorted((q for q in reussies if q["utile"] is False or q["confiance"] in priorite),

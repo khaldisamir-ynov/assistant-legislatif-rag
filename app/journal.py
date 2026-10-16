@@ -2,7 +2,7 @@
 
 Un fichier JSONL (une ligne JSON par événement), en ajout seul : lisible à l'œil,
 avec `grep`, ou par analyse_logs.py. Deux types d'événements, reliés par `id` :
-- "question" : question, réponse, sources, filtres, confiance, latence (ou erreur LLM) ;
+- "question" : question, réponse, sources, filtres, confiance, latence, tokens (ou erreur LLM) ;
 - "avis"     : 👍/👎 donné ensuite par l'utilisateur sur cette réponse.
 
 Pas d'adresse IP ni d'identifiant d'utilisateur : seulement ce qui sert à évaluer.
@@ -43,7 +43,8 @@ def journaliser_question(canal: str, question: str, latence_ms: int,
                       "confiance": resultat["confiance"]["niveau"],
                       "raisons": resultat["confiance"]["raisons"],
                       "sources": [s["id"] for s in resultat["sources"]],
-                      "filtres": resultat["filtres"]}
+                      "filtres": resultat["filtres"],
+                      "tokens": resultat["tokens"]}
     if erreur is not None:
         evenement["erreur"] = erreur
     _ecrire(evenement)

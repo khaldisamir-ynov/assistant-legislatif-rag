@@ -48,6 +48,20 @@ class TestReference(unittest.TestCase):
         self.assertEqual(m["erreurs_llm"], 1)
         self.assertEqual(m["latence_mediane_s"], 2.0)
         self.assertNotIn("taux_paires_miroir", metriques(resultats, []))  # rien à mesurer : pas de métrique
+        self.assertNotIn("tokens_entree", m)  # aucun résultat ne porte de tokens
+
+    def test_tokens(self):
+        resultats = [
+            {"type": "cible", "retriever_ok": True, "reponse_ok": True, "lien_ok": True, "latence_totale_s": 1.0,
+             "tokens": {"entree": 3000, "sortie": 200}},
+            {"type": "cible", "retriever_ok": True, "reponse_ok": True, "lien_ok": True, "latence_totale_s": 1.0,
+             "tokens": {"entree": 1000, "sortie": 101}},
+            {"type": "cible", "retriever_ok": True, "reponse_ok": True, "lien_ok": True, "latence_totale_s": 1.0,
+             "tokens": None},  # fournisseur sans `usage` : ignoré
+        ]
+        m = metriques(resultats, [])
+        self.assertEqual((m["tokens_entree"], m["tokens_sortie"]), (4000, 301))
+        self.assertEqual((m["tokens_moyens_entree"], m["tokens_moyens_sortie"]), (2000, 150))
 
     def test_fichier_de_cas(self):
         types = {"cible", "hors périmètre", "aucun résultat", "sécurité", "neutralité"}

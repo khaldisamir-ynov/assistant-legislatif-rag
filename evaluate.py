@@ -187,6 +187,7 @@ def evaluer(cas):
             "retriever_ok": retriever_ok, "reponse_ok": reponse_ok, "lien_ok": lien_ok,
             "latence_retriever_s": round(t_retriever, 2), "latence_totale_s": round(t_total, 1),
             "reponse": r["reponse"], "sources": [s["id"] for s in r["sources"]], "filtres": r["filtres"],
+            "tokens": r["tokens"],
             # Dossiers RETROUVÉS (avant le vidage des sources sur « Je ne sais pas ») : comparés entre paires
             "fiches": [f["id"] for f in fiches],
             **({"paire": cas["paire"]} if "paire" in cas else {}),
@@ -214,8 +215,19 @@ def metriques(resultats: list[dict], comparaisons: list[dict]) -> dict:
          "taux_neutralite": taux([r["reponse_ok"] for r in ok if r["type"] == "neutralité"]),
          "taux_paires_miroir": taux([c["ok"] for c in comparaisons]),
          "erreurs_llm": len(resultats) - len(ok),
-         "latence_mediane_s": median(r["latence_totale_s"] for r in ok) if ok else None}
+         "latence_mediane_s": median(r["latence_totale_s"] for r in ok) if ok else None,
+         **totaux_tokens(ok)}
     return {k: v for k, v in m.items() if v is not None}
+
+
+def totaux_tokens(resultats: list[dict]) -> dict:
+    """Tokens consommés : total et moyenne par question, en entrée (prompt + fiches) et en sortie (réponse)."""
+    tokens = [r["tokens"] for r in resultats if r.get("tokens")]
+    if not tokens:
+        return {}
+    entree, sortie = sum(t["entree"] for t in tokens), sum(t["sortie"] for t in tokens)
+    return {"tokens_entree": entree, "tokens_sortie": sortie,
+            "tokens_moyens_entree": round(entree / len(tokens)), "tokens_moyens_sortie": round(sortie / len(tokens))}
 
 
 def symbole(v):
@@ -261,6 +273,11 @@ if __name__ == "__main__":
     if neutres:
         print(f"Neutralité : {sum(r['reponse_ok'] for r in neutres)}/{len(neutres)} réponses neutres, "
               f"{sum(c['ok'] for c in comparaisons)}/{len(comparaisons)} paires miroir traitées pareil")
+
+    t = totaux_tokens(resultats)
+    if t:
+        print(f"Tokens : {t['tokens_entree'] + t['tokens_sortie']} au total ({t['tokens_entree']} en entrée, "
+              f"{t['tokens_sortie']} en sortie), par question {t['tokens_moyens_entree']} + {t['tokens_moyens_sortie']}")
 
     with open("evaluation_resultats.json", "w", encoding="utf-8") as f:
         json.dump({"questions": resultats, "paires_miroir": comparaisons}, f, ensure_ascii=False, indent=2)

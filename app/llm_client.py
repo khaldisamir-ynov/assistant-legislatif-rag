@@ -40,7 +40,8 @@ def client() -> OpenAI:
     )
 
 
-def generer(messages: list[dict]) -> str:
+def generer(messages: list[dict]) -> tuple[str, dict | None]:
+    """Texte de la réponse et tokens consommés {entree, sortie} (None si le fournisseur ne les renvoie pas)."""
     if not config.LLM_API_KEY or not config.LLM_MODEL:
         raise ErreurLLM("configuration incomplète : renseigner LLM_MODEL et LLM_API_KEY dans .env")
     try:
@@ -59,4 +60,6 @@ def generer(messages: list[dict]) -> str:
     texte = reponse.choices[0].message.content
     if not texte:  # None possible (filtre de contenu, coupure) : 503 lisible plutôt qu'un 500
         raise ErreurLLM("le LLM a renvoyé une réponse vide")
-    return texte.strip()
+    u = reponse.usage
+    tokens = {"entree": u.prompt_tokens, "sortie": u.completion_tokens} if u else None
+    return texte.strip(), tokens
