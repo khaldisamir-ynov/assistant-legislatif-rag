@@ -52,7 +52,7 @@ Le LLM est hébergé chez Mistral : on ne le quantifie pas. Ce serait possible a
 |---|---|---|
 | 9.1 | Mesurer les tokens par question (`usage`, renvoyé par l'API, à journaliser) | Tokens moyens par question |
 | 9.2 | **Estimation budgétaire pour 1 000 utilisateurs par jour** : tokens Mistral, hébergement Azure (API, Chainlit, pipeline), stockage, MLflow. Hypothèses écrites (questions par utilisateur, pics) | Fichier d'estimation |
-| 9.3 | **`README.md`** (absent aujourd'hui) : objectif, architecture, installation, lancement, évaluation, limites | `README.md` |
+| 9.3 ✅ | **`README.md`** : objectif, architecture, installation, lancement, évaluation, limites | `README.md` |
 | 9.4 | Optionnel : comparer coût et qualité de plusieurs LLM (MLflow + base de test) | Tableau comparatif |
 
 **Livrable final du sujet :** un dépôt Git complet (code, Dockerfile, README.md, estimation budgétaire).
