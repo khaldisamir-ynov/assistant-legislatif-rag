@@ -14,6 +14,7 @@ Suit les itérations 6 à 9 du sujet. **Ordre conseillé : 8 → 6 → 7 → 9.*
 | Suivi | Journal des questions en production, `analyse_logs.py` ; MLflow : un run par question (« production ») et par évaluation (« evaluation »), avec les hyperparamètres |
 | Évaluation | Base de test de référence `cas_evaluation.json` (31 questions : 15 générales, 16 orientées), tests unitaires. Résultat : 29/31 (16/10/2026, Qwen3.8-27B ; 29/31 avec Mistral le 15/10) |
 | Livraison | Image Docker unique (API, Chainlit, pipeline), 2,73 Go, clé et données hors image |
+| Automatisation | GitHub Actions : tests unitaires à chaque push et pull request (`tests.yml`) ; évaluation complète chaque lundi et à la demande (`evaluation.yml` : index du jour reconstruit, `evaluate.py --juge`, échec sous 29/31) |
 
 ## Itération 6 : Optimisation (faire mieux avec moins)
 
@@ -22,7 +23,7 @@ Suit les itérations 6 à 9 du sujet. **Ordre conseillé : 8 → 6 → 7 → 9.*
 | 6.1 | **Quantifier le modèle e5 en INT8** (`onnxruntime.quantization`, ou fichier INT8 déjà publié s'il existe), puis ré-indexer | Taille du modèle et de l'image, RAM du conteneur, temps d'embedding, rangs sur `cas_evaluation.json` |
 | 6.2 | Streaming de la réponse : moins urgent depuis Qwen via Cerebras (médiane 0,6 s le 16/10, contre 2,1 s et jusqu'à 6,5 s avec Mistral le 15/10) | Temps avant le 1er mot affiché |
 | 6.3 | Ingestion sans coupure : la base n'est plus vide pendant ~3 min (bascule entre deux collections) | Requêtes en échec pendant l'ingestion |
-| 6.4 | Limite de débit Cerebras (via Hugging Face) : des questions en rafale reçoivent une erreur 429 (jusqu'à 6 sur 31 dans un passage d'`evaluate.py`, 16/10). Attente plus longue entre les tentatives, ou autre fournisseur (suffixe `:fournisseur` de `LLM_MODEL`) | Erreurs 429 par passage d'`evaluate.py` |
+| 6.4 | Limite de débit Cerebras (via Hugging Face) : des questions en rafale reçoivent une erreur 429 (jusqu'à 6 sur 31 dans un passage d'`evaluate.py`, 16/10). **En partie** (16/10) : `evaluate.py` réessaie une 429 deux fois après 30 s. Reste la production (API, Chainlit) : même reprise, ou autre fournisseur (suffixe `:fournisseur` de `LLM_MODEL`) | Erreurs 429 par passage d'`evaluate.py` |
 
 Le LLM est hébergé via Hugging Face (Cerebras) : on ne le quantifie pas. Ce serait possible avec un modèle auto-hébergé (Ollama, vLLM), où seul `.env` change.
 
@@ -45,6 +46,7 @@ Le LLM est hébergé via Hugging Face (Cerebras) : on ne le quantifie pas. Ce se
 | 8.4 | Enrichir la base de test : questions 👎 du journal, statuts déduits vérifiés sur un échantillon | `cas_evaluation.json` |
 | 8.5 | Qualité des réponses : confiance date + étape, suivi de la neutralité, LLM juge. **LLM juge fait** (16/10/2026) : `evaluate.py --juge`, Gemma 4 31B juge fidélité, pertinence et neutralité (métriques `taux_juge_*` dans MLflow) ; reste la confiance date + étape en production | Nouvelles métriques suivies |
 | 8.6 ✅ | **2e expérience : embeddings calculés par l'API Hugging Face** (plus de modèle local, image ~1,1 Go plus légère). e5-base n'y est pas servi en vecteurs ; e5-large l'est. **Rejeté** (16/10/2026) : 20/31 contre 29/31, paires miroir 3/5 contre 5/5. La fiche « Fin de vie » passe 3e derrière des titres proches | Run « evaluation », e5-base local conservé |
+| 8.7 ✅ | **Évaluation automatisée** (16/10/2026) : workflow GitHub Actions `evaluation.yml`, chaque lundi 6 h UTC et à la demande. Reconstruit l'index sur les données du jour (`pipeline.py`), lance `evaluate.py --juge --min-reussies 29` : le run échoue sous le score de référence. Bilan sur la page du run, `evaluation_resultats.json` joint. Secret `HF_TOKEN`. 1er lancement (16/10/2026, 11 min 28 s, 2 551 fiches du jour) : **29/31**, neutralité 16/16, paires miroir 5/5, juge 31/31 sur les 3 critères ; 2 erreurs 429 rattrapées par les nouvelles tentatives | `.github/workflows/evaluation.yml` |
 
 **Livrable du sujet :** un tableau de bord MLflow avec l'historique des requêtes et des métriques.
 
@@ -61,7 +63,7 @@ Le LLM est hébergé via Hugging Face (Cerebras) : on ne le quantifie pas. Ce se
 
 ## Transverse : déploiement Azure
 
-Publier l'image Docker déjà construite (API, Chainlit, pipeline planifié). Requis pour 7.4 et pour chiffrer 9.2 sur des coûts réels.
+Publier l'image Docker déjà construite (API, Chainlit, pipeline planifié). Requis pour 7.4 et pour chiffrer 9.2 sur des coûts réels. Avec un serveur MLflow hébergé, l'évaluation du lundi (8.7) y serait aussi enregistrée : aujourd'hui MLflow est local, injoignable depuis GitHub.
 
 ## Hors périmètre pour l'instant
 
