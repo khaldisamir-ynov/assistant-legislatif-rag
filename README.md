@@ -77,7 +77,7 @@ Depuis un conteneur, MLflow s'atteint par `MLFLOW_TRACKING_URI=http://host.docke
 ## Évaluation
 
 ```bash
-python -m unittest discover tests -v   # tests unitaires, sans LLM ni base
+python -m unittest discover tests -v   # tests unitaires, sans LLM ni base (lancés aussi par GitHub Actions à chaque push)
 python evaluate.py                     # 31 questions de cas_evaluation.json (LLM et base requis)
 python evaluate.py --neutralite        # les 16 questions orientées seulement
 python evaluate.py --juge              # en plus : un LLM juge relit chaque réponse

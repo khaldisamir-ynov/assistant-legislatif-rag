@@ -1,0 +1,19 @@
+# Tests unitaires à chaque push et pull request : sans LLM, sans base vectorielle, sans secret.
+# evaluate.py n'est pas lancé ici : il faut le LLM (coût, quota 429) et l'index chroma_db/, absent du dépôt.
+name: Tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"  # même version que le Dockerfile
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python -m unittest discover tests -v
