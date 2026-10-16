@@ -193,6 +193,11 @@ def evaluer(cas):
             **({"problemes_neutralite": problemes} if cas["type"] == "neutralité" else {})}
 
 
+def reussi(r: dict) -> bool:
+    """Retriever ET réponse : une erreur LLM ou un retriever en échec font échouer la question."""
+    return bool(r.get("reponse_ok") and r.get("retriever_ok") is not False)
+
+
 def metriques(resultats: list[dict], comparaisons: list[dict]) -> dict:
     """Taux de 0 à 1 suivis dans MLflow. Chaque taux ne compte que les questions où le contrôle s'applique ;
     une erreur LLM compte comme un échec dans taux_reussite."""
@@ -202,7 +207,7 @@ def metriques(resultats: list[dict], comparaisons: list[dict]) -> dict:
         valeurs = [v for v in valeurs if v is not None]
         return sum(valeurs) / len(valeurs) if valeurs else None
 
-    m = {"taux_reussite": taux([bool(r.get("reponse_ok") and r.get("retriever_ok") is not False) for r in resultats]),
+    m = {"taux_reussite": taux([reussi(r) for r in resultats]),
          "taux_retriever": taux([r["retriever_ok"] for r in ok]),
          "taux_reponse": taux([r["reponse_ok"] for r in ok]),
          "taux_lien_attendu": taux([r["lien_ok"] for r in ok]),
@@ -250,7 +255,7 @@ if __name__ == "__main__":
             if c["dates_une_seule_reponse"]:
                 print(f"    (indicatif) dates citées d'un seul côté : {', '.join(c['dates_une_seule_reponse'])}")
 
-    reussis = sum(1 for r in resultats if r.get("reponse_ok") and r.get("retriever_ok") is not False)
+    reussis = sum(map(reussi, resultats))
     print(f"\nBilan : {reussis}/{len(resultats)} questions réussies (retriever ET réponse)")
     neutres = [r for r in resultats if r["type"] == "neutralité" and "erreur" not in r]
     if neutres:
