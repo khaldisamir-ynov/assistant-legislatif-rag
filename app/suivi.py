@@ -66,14 +66,14 @@ def enregistrer_requete(canal: str, question: str, latence_ms: int, identifiant:
         _envoi.submit(_envoyer_requete, canal, question, latence_ms, identifiant, resultat, erreur)
 
 
-def enregistrer_evaluation(jeu: str, metriques: dict, fichiers: list[str]) -> None:
+def enregistrer_evaluation(jeu: str, metriques: dict, fichiers: list[str], parametres_jeu: dict | None = None) -> None:
     """Un run dans l'expérience "evaluation". Synchrone : evaluate.py est lancé à la main."""
     if not ACTIF:
         print("MLflow : MLFLOW_TRACKING_URI absent, évaluation non suivie")
         return
     mlflow.set_experiment("evaluation")
     with mlflow.start_run(run_name=jeu):
-        mlflow.log_params({**parametres(), "jeu": jeu})
+        mlflow.log_params({**parametres(), "jeu": jeu, **(parametres_jeu or {})})
         mlflow.log_metrics(metriques)
         for fichier in fichiers:
             mlflow.log_artifact(fichier)

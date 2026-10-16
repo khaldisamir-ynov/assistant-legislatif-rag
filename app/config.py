@@ -44,6 +44,8 @@ LLM_MODEL = os.getenv("LLM_MODEL", "ministral-14b-latest")
 HF_BILL_TO = os.getenv("HF_BILL_TO")
 # Modèles à raisonnement (ex. Qwen3) : "none" coupe la réflexion, qui sinon consomme les MAX_TOKENS ; vide = non envoyé
 LLM_REASONING_EFFORT = os.getenv("LLM_REASONING_EFFORT")
+# LLM juge d'evaluate.py --juge (app/juge.py) : autre famille que LLM_MODEL, même fournisseur
+LLM_JUGE_MODEL = os.getenv("LLM_JUGE_MODEL")
 
 # --- Suivi MLflow (app/suivi.py) : URL du serveur ; vide = suivi désactivé ---
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI")

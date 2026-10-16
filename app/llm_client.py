@@ -40,13 +40,14 @@ def client() -> OpenAI:
     )
 
 
-def generer(messages: list[dict]) -> tuple[str, dict | None]:
+def generer(messages: list[dict], modele: str | None = None) -> tuple[str, dict | None]:
     """Texte de la réponse et tokens consommés {entree, sortie} (None si le fournisseur ne les renvoie pas)."""
-    if not config.LLM_API_KEY or not config.LLM_MODEL:
-        raise ErreurLLM("configuration incomplète : renseigner LLM_MODEL et LLM_API_KEY dans .env")
+    modele = modele or config.LLM_MODEL  # un autre modèle : le juge d'evaluate.py --juge
+    if not config.LLM_API_KEY or not modele:
+        raise ErreurLLM("configuration incomplète : renseigner LLM_MODEL (et LLM_JUGE_MODEL pour --juge) et LLM_API_KEY dans .env")
     try:
         reponse = client().chat.completions.create(
-            model=config.LLM_MODEL,
+            model=modele,
             messages=messages,
             temperature=TEMPERATURE,
             max_tokens=MAX_TOKENS,

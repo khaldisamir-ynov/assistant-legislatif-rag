@@ -3,6 +3,7 @@ lues dans la base de test de référence cas_evaluation.json.
 
 Usage :  python evaluate.py               -> tout : tableau de synthèse + evaluation_resultats.json
          python evaluate.py --neutralite  -> seulement les questions de neutralité
+         python evaluate.py --juge        -> en plus, un LLM juge relit chaque réponse (app/juge.py)
 
 Pour chaque question on mesure, par rapport à la référence :
 - la latence (totale, et part du retriever) ;
@@ -21,10 +22,12 @@ from datetime import date, timedelta
 from pathlib import Path
 from statistics import median
 
+from app import config
 from app.confiance import MOTIF_DATE, est_un_refus
 from app.embeddings import encoder_passages
+from app.juge import CRITERES, juger
 from app.llm_client import ErreurLLM
-from app.prompt import CONSIGNES
+from app.prompt import CONSIGNES, construire_messages
 from app.rag import repondre
 from app.retriever import rechercher
 from app.suivi import enregistrer_evaluation
@@ -37,6 +40,7 @@ from app.suivi import enregistrer_evaluation
 CAS = json.loads(Path(__file__).with_name("cas_evaluation.json").read_text(encoding="utf-8"))
 # Type où la bonne réponse est "Je ne sais pas", sans aucune source
 TYPES_REFUS = {"hors périmètre"}
+JUGE = "--juge" in sys.argv
 
 # ---------------------------------------------------------------------------------------------
 # Neutralité
@@ -152,7 +156,7 @@ def comparer_paire(a: dict, b: dict) -> dict:
 def evaluer(cas):
     q = cas["question"]
     t0 = time.perf_counter()
-    _, fiches = rechercher(q)                      # mesuré seul : part du retriever
+    filtres, fiches = rechercher(q)                # mesuré seul : part du retriever
     t_retriever = time.perf_counter() - t0
     retriever_ok = verifier_retriever(cas, fiches)
     textes_fiches = "\n".join(f["texte"] for f in fiches)
@@ -163,6 +167,13 @@ def evaluer(cas):
     except ErreurLLM as e:
         return {**cas, "erreur": str(e)}
     t_total = time.perf_counter() - t0
+
+    juge = None
+    if JUGE:  # le juge voit ce que l'assistant a vu : mêmes consignes, mêmes fiches (recherche déterministe)
+        try:
+            juge = juger(construire_messages(q, fiches, filtres), r["reponse"])
+        except ErreurLLM as e:  # une panne du juge ne fait pas échouer la question
+            juge = {"erreur": str(e)}
 
     ne_sait_pas = est_un_refus(r["reponse"])
     lien_ok = None
@@ -191,6 +202,7 @@ def evaluer(cas):
             # Dossiers RETROUVÉS (avant le vidage des sources sur « Je ne sais pas ») : comparés entre paires
             "fiches": [f["id"] for f in fiches],
             **({"paire": cas["paire"]} if "paire" in cas else {}),
+            **({"juge": juge} if juge else {}),
             **({"problemes_neutralite": problemes} if cas["type"] == "neutralité" else {})}
 
 
@@ -217,6 +229,13 @@ def metriques(resultats: list[dict], comparaisons: list[dict]) -> dict:
          "erreurs_llm": len(resultats) - len(ok),
          "latence_mediane_s": median(r["latence_totale_s"] for r in ok) if ok else None,
          **totaux_tokens(ok)}
+    # LLM juge (--juge) : taux sur les verdicts lisibles ; ses erreurs ne comptent pas comme des échecs
+    juges = [r["juge"] for r in ok if "juge" in r]
+    if juges:
+        verdicts = [j for j in juges if "erreur" not in j]
+        m |= {f"taux_juge_{c}": taux([v[c] for v in verdicts]) for c in CRITERES}
+        m |= {"erreurs_juge": len(juges) - len(verdicts),
+              "tokens_juge": sum(j["tokens"]["entree"] + j["tokens"]["sortie"] for j in juges if j.get("tokens"))}
     return {k: v for k, v in m.items() if v is not None}
 
 
@@ -251,6 +270,11 @@ if __name__ == "__main__":
               f"{r['latence_totale_s']} s (retriever {r['latence_retriever_s']} s)")
         for probleme in r.get("problemes_neutralite", []):
             print(f"    -> {probleme}")
+        j = r.get("juge")
+        if j and "erreur" in j:
+            print(f"    juge : ERREUR {j['erreur']}")
+        elif j and not all(j[c] for c in CRITERES):
+            print(f"    juge : non {', '.join(c for c in CRITERES if not j[c])} : {j['justification']}")
 
     # Paires miroir : comparées une fois les deux réponses obtenues
     paires = {}
@@ -274,6 +298,12 @@ if __name__ == "__main__":
         print(f"Neutralité : {sum(r['reponse_ok'] for r in neutres)}/{len(neutres)} réponses neutres, "
               f"{sum(c['ok'] for c in comparaisons)}/{len(comparaisons)} paires miroir traitées pareil")
 
+    m = metriques(resultats, comparaisons)
+    if "erreurs_juge" in m:
+        verdicts = [r["juge"] for r in resultats if "erreur" not in r.get("juge", {"erreur": None})]
+        print(f"Juge ({config.LLM_JUGE_MODEL}) : " + ", ".join(
+            f"{sum(v[c] for v in verdicts)}/{len(verdicts)} {c}s" for c in CRITERES)
+            + f" ; {m['erreurs_juge']} erreur(s), {m['tokens_juge']} tokens")
     t = totaux_tokens(resultats)
     if t:
         print(f"Tokens : {t['tokens_entree'] + t['tokens_sortie']} au total ({t['tokens_entree']} en entrée, "
@@ -284,5 +314,5 @@ if __name__ == "__main__":
     print("\nRéponses complètes : evaluation_resultats.json (à relire : exactitude, neutralité)")
     # La base de test est jointe au run : on sait sur quelles questions chaque score a été obtenu
     enregistrer_evaluation("neutralite" if "--neutralite" in sys.argv else "complet",
-                           metriques(resultats, comparaisons),
-                           ["evaluation_resultats.json", str(Path(__file__).with_name("cas_evaluation.json"))])
+                           m, ["evaluation_resultats.json", str(Path(__file__).with_name("cas_evaluation.json"))],
+                           {"modele_juge": config.LLM_JUGE_MODEL} if JUGE else None)
