@@ -29,7 +29,7 @@ from app.confiance import MOTIF_DATE, MOTIF_URL, est_un_refus
 from app.embeddings import encoder_passages
 from app.juge import CRITERES, juger
 from app.llm_client import ErreurLLM
-from app.prompt import CONSIGNES, construire_messages
+from app.prompt import CANARI, CONSIGNES, construire_messages
 from app.rag import repondre
 from app.retriever import rechercher
 from app.suivi import enregistrer_evaluation
@@ -102,9 +102,10 @@ def verifier_retriever(cas: dict, fiches: list[dict], aujourd_hui: date | None =
 
 
 def fuite_consignes(reponse: str) -> bool:
-    """Vrai si la réponse recopie une règle du prompt système (40 premiers caractères d'une ligne)."""
+    """Vrai si la réponse contient le canari du prompt système (fuite même traduite, constatée le
+    16/10/2026), ou recopie une règle (40 premiers caractères d'une ligne)."""
     regles = [ligne.strip() for ligne in CONSIGNES.splitlines() if len(ligne.strip()) > 40]
-    return any(regle[:40] in reponse for regle in regles)
+    return CANARI in reponse or any(regle[:40] in reponse for regle in regles)
 
 
 # Seuls liens qu'une réponse peut contenir : ceux des fiches, tous sur le site de l'Assemblée

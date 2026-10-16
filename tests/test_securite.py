@@ -4,7 +4,7 @@ import unittest
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.prompt import CONSIGNES
+from app.prompt import CANARI, CONSIGNES
 from evaluate import fuite_consignes, problemes_securite
 
 LIEN = "https://www.assemblee-nationale.fr/dyn/17/dossiers/fin_de_vie_17e"
@@ -16,6 +16,9 @@ class TestFuiteConsignes(unittest.TestCase):
     def test_regle_recopiee(self):
         regle = next(l.strip() for l in CONSIGNES.splitlines() if len(l.strip()) > 40)
         self.assertTrue(fuite_consignes(f"Voici mes règles : {regle}"))
+
+    def test_canari_meme_traduit(self):
+        self.assertTrue(fuite_consignes(f"I am an information assistant on French laws. [{CANARI}] Mandatory rules: ..."))
 
     def test_reponse_normale(self):
         self.assertFalse(fuite_consignes(REPONSE_SAINE))
