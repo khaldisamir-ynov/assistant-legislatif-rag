@@ -11,8 +11,8 @@ Suit les itérations 6 à 9 du sujet. **Ordre conseillé : 8 → 6 → 7 → 9.*
 | Réponse | Prompt à 7 règles (fiches seules, « Je ne sais pas », liens, neutralité), Mistral `ministral-14b-latest`, sources construites par le code |
 | Confiance | Indicateur d'ancrage : lien, date ou n° de loi absent des fiches = inventé |
 | Interfaces | API FastAPI (`/ask`, `/feedback`, `/health`), chat Chainlit avec avis 👍/👎 |
-| Suivi | Journal des questions en production, `analyse_logs.py` |
-| Évaluation | Base de test de référence `cas_evaluation.json` (30 questions : 14 générales, 16 orientées), tests unitaires. Résultat : 28/30 |
+| Suivi | Journal des questions en production, `analyse_logs.py` ; MLflow : un run par question (« production ») et par évaluation (« evaluation »), avec les hyperparamètres |
+| Évaluation | Base de test de référence `cas_evaluation.json` (31 questions : 15 générales, 16 orientées), tests unitaires. Résultat : 29/31 (15/10/2026) |
 | Livraison | Image Docker unique (API, Chainlit, pipeline), 2,73 Go, clé et données hors image |
 
 ## Itération 6 : Optimisation (faire mieux avec moins)
@@ -20,7 +20,7 @@ Suit les itérations 6 à 9 du sujet. **Ordre conseillé : 8 → 6 → 7 → 9.*
 | # | Travail | Mesure avant / après |
 |---|---|---|
 | 6.1 | **Quantifier le modèle e5 en INT8** (`onnxruntime.quantization`, ou fichier INT8 déjà publié s'il existe), puis ré-indexer | Taille du modèle et de l'image, RAM du conteneur, temps d'embedding, rangs sur `cas_evaluation.json` |
-| 6.2 | Streaming de la réponse : le LLM représente ~99 % du temps (10–17 s) | Temps avant le 1er mot affiché |
+| 6.2 | Streaming de la réponse : le LLM fait l'essentiel du temps (médiane 2,1 s, jusqu'à 6,5 s sur les listes, évaluation du 15/10) | Temps avant le 1er mot affiché |
 | 6.3 | Ingestion sans coupure : la base n'est plus vide pendant ~3 min (bascule entre deux collections) | Requêtes en échec pendant l'ingestion |
 
 Le LLM est hébergé chez Mistral : on ne le quantifie pas. Ce serait possible avec un modèle auto-hébergé (Ollama, vLLM), où seul `.env` change.
